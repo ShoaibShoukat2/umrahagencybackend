@@ -39,7 +39,9 @@ ALLOWED_HOSTS = [
     'backend.tmfouzy.sg',
     'www.backend.tmfouzy.sg',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '192.168.100.13',  # Your local IP for mobile testing
+    '*',  # Allow all for development
 ]
 
 
@@ -160,12 +162,17 @@ SERVER_EMAIL = 'tmfttotp@tmfouzy.sg'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8081",  # Expo dev server
+    "http://192.168.100.13:8081",  # Expo on local network
     "https://tmfouzy.sg",
     "https://www.tmfouzy.sg",
     "http://tmfouzy.sg",
     "http://www.tmfouzy.sg",
     "https://8606-223-123-125-222.ngrok-free.app",  # Ngrok frontend URL
 ]
+
+# Allow all origins for development (mobile app testing)
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Allow credentials for CORS
 CORS_ALLOW_CREDENTIALS = True
@@ -191,3 +198,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12
 }
+
+
+# ==========================================
+# LIVE AUDIO STREAMING CONFIGURATION
+# ==========================================
+
+# Agora.io Configuration
+# Sign up at: https://www.agora.io/
+# Get App ID and App Certificate from Agora Console
+AGORA_APP_ID = os.getenv('AGORA_APP_ID', '')
+AGORA_APP_CERTIFICATE = os.getenv('AGORA_APP_CERTIFICATE', '')
+
+# Firebase Cloud Messaging (Push Notifications)
+# Get Server Key from: Firebase Console > Project Settings > Cloud Messaging
+FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY', '')
+
+# Validate Live Audio Configuration
+if not AGORA_APP_ID:
+    print('⚠️  WARNING: AGORA_APP_ID not configured. Live audio streaming will not work.')
+if not AGORA_APP_CERTIFICATE:
+    print('⚠️  WARNING: AGORA_APP_CERTIFICATE not configured. Live audio streaming will not work.')
+if not FCM_SERVER_KEY:
+    print('⚠️  WARNING: FCM_SERVER_KEY not configured. Push notifications will not work.')

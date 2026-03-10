@@ -187,6 +187,8 @@ def login(request):
                 'name': user.first_name,
                 'phone': customer.phone,
                 'address': customer.address,
+                'city': customer.city,
+                'country': customer.country,
                 'postal_code': customer.postal_code
             }
         }, status=status.HTTP_200_OK)
@@ -302,3 +304,59 @@ def admin_login(request):
         'is_superuser': user.is_superuser,
         'token': 'admin-token-placeholder'  # Add proper token generation if needed
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+@permission_classes([AllowAny])
+def update_profile(request):
+    """Update user profile"""
+    email = request.data.get('email')
+    
+    if not email:
+        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Get user by email
+        user = User.objects.get(username=email)
+        customer = Customer.objects.get(user=user)
+        
+        # Update user fields
+        if 'name' in request.data:
+            user.first_name = request.data['name']
+            user.save()
+        
+        # Update customer fields
+        if 'phone' in request.data:
+            customer.phone = request.data['phone']
+        if 'address' in request.data:
+            customer.address = request.data['address']
+        if 'city' in request.data:
+            customer.city = request.data['city']
+        if 'country' in request.data:
+            customer.country = request.data['country']
+        if 'postal_code' in request.data:
+            customer.postal_code = request.data['postal_code']
+        
+        customer.save()
+        
+        return Response({
+            'message': 'Profile updated successfully',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.first_name,
+                'phone': customer.phone,
+                'address': customer.address,
+                'city': customer.city,
+                'country': customer.country,
+                'postal_code': customer.postal_code
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Customer.DoesNotExist:
+        return Response({'error': 'Customer profile not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': f'Failed to update profile: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

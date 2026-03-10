@@ -1158,3 +1158,111 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Dua Views
+@api_view(['GET'])
+def dua_categories_list(request):
+    """Get all dua categories with their subcategories and duas"""
+    categories = DuaCategory.objects.filter(is_active=True).prefetch_related(
+        'subcategories__duas',
+        'subcategories__rounds__duas'
+    )
+    serializer = DuaCategorySerializer(categories, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def dua_category_detail(request, slug):
+    """Get a specific dua category with all its subcategories and duas"""
+    try:
+        category = DuaCategory.objects.prefetch_related(
+            'subcategories__duas',
+            'subcategories__rounds__duas'
+        ).get(slug=slug, is_active=True)
+        serializer = DuaCategorySerializer(category)
+        return Response(serializer.data)
+    except DuaCategory.DoesNotExist:
+        return Response({'error': 'Category not found'}, status=404)
+
+
+@api_view(['GET'])
+def dua_subcategory_detail(request, category_slug, subcategory_slug):
+    """Get a specific dua subcategory with its duas or rounds"""
+    try:
+        subcategory = DuaSubCategory.objects.prefetch_related(
+            'duas',
+            'rounds__duas'
+        ).get(
+            category__slug=category_slug,
+            slug=subcategory_slug,
+            is_active=True
+        )
+        serializer = DuaSubCategorySerializer(subcategory)
+        return Response(serializer.data)
+    except DuaSubCategory.DoesNotExist:
+        return Response({'error': 'Subcategory not found'}, status=404)
+
+
+# Customer Document Views
+@api_view(['GET'])
+def get_customer_documents(request):
+    """Get all documents for the logged-in customer"""
+    try:
+        # Get email from query params or authenticated user
+        email = request.query_params.get('email')
+        if not email:
+            if request.user.is_authenticated:
+                email = request.user.email
+            else:
+                return Response({'error': 'Email parameter required or user must be authenticated'}, status=400)
+        
+        customer = Customer.objects.get(email=email)
+        
+        documents = CustomerDocument.objects.filter(customer=customer).select_related(
+            'booking', 'uploaded_by'
+        )
+        
+        serializer = CustomerDocumentSerializer(documents, many=True, context={'request': request})
+        return Response(serializer.data)
+    except Customer.DoesNotExist:
+        return Response({'error': 'Customer not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+def get_document_detail(request, document_id):
+    """Get details of a specific document"""
+    try:
+        # Get email from query params or authenticated user
+        email = request.query_params.get('email')
+        if not email:
+            if request.user.is_authenticated:
+                email = request.user.email
+            else:
+                return Response({'error': 'Email parameter required or user must be authenticated'}, status=400)
+        
+        customer = Customer.objects.get(email=email)
+        
+        document = CustomerDocument.objects.select_related(
+            'booking', 'uploaded_by'
+        ).get(id=document_id, customer=customer)
+        
+        serializer = CustomerDocumentSerializer(document, context={'request': request})
+        return Response(serializer.data)
+    except CustomerDocument.DoesNotExist:
+        return Response({'error': 'Document not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+def upload_customer_document(request):
+    """Upload a document for a customer (staff only)"""
+    serializer = CustomerDocumentSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        # Set uploaded_by to current user
+        serializer.save(uploaded_by=request.user)
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)

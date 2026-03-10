@@ -455,3 +455,85 @@ class DiscountCodeAdmin(admin.ModelAdmin):
             'fields': ('created_at',)
         }),
     )
+
+
+# Dua Admin
+@admin.register(DuaCategory)
+class DuaCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'icon_name', 'icon_type', 'color', 'order', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ['order', 'name']
+
+
+@admin.register(DuaSubCategory)
+class DuaSubCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'slug', 'has_rounds', 'order', 'is_active']
+    list_filter = ['category', 'has_rounds', 'is_active']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ['category', 'order', 'name']
+
+
+@admin.register(DuaRound)
+class DuaRoundAdmin(admin.ModelAdmin):
+    list_display = ['name', 'subcategory', 'round_number', 'order', 'is_active']
+    list_filter = ['subcategory', 'is_active']
+    search_fields = ['name']
+    ordering = ['subcategory', 'order', 'round_number']
+
+
+@admin.register(Dua)
+class DuaAdmin(admin.ModelAdmin):
+    list_display = ['title', 'subcategory', 'round', 'order', 'is_active']
+    list_filter = ['subcategory', 'round', 'is_active']
+    search_fields = ['title', 'arabic_text', 'transliteration', 'translation', 'description']
+    ordering = ['subcategory', 'round', 'order']
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('subcategory', 'round', 'title', 'description')
+        }),
+        ('Dua Content', {
+            'fields': ('arabic_text', 'transliteration', 'translation')
+        }),
+        ('Settings', {
+            'fields': ('order', 'is_active')
+        }),
+    )
+
+
+# Customer Document Admin
+@admin.register(CustomerDocument)
+class CustomerDocumentAdmin(admin.ModelAdmin):
+    list_display = ['title', 'customer', 'document_type', 'booking', 'is_important', 'expiry_date', 'uploaded_by', 'created_at']
+    list_filter = ['document_type', 'is_important', 'created_at', 'expiry_date']
+    search_fields = ['title', 'description', 'customer__email', 'customer__user__username']
+    readonly_fields = ['file_size', 'created_at', 'updated_at']
+    autocomplete_fields = ['customer', 'booking', 'uploaded_by']
+    
+    fieldsets = (
+        ('Document Information', {
+            'fields': ('customer', 'booking', 'document_type', 'title', 'description')
+        }),
+        ('File', {
+            'fields': ('file', 'file_size')
+        }),
+        ('Settings', {
+            'fields': ('is_important', 'expiry_date', 'uploaded_by')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        # Automatically set uploaded_by to current user if not set
+        if not obj.uploaded_by:
+            obj.uploaded_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('customer', 'booking', 'uploaded_by')

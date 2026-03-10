@@ -1,11 +1,29 @@
-# .htaccess for Django Backend on cPanel
-# Place this file in /home/tmfouzys/public_html/backend.tmfouzy.sg/
-
-# Passenger Configuration for Python App
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/tmfouzys/backend.tmfouzy.sg"
+PassengerBaseURI "/"
+PassengerPython "/home/tmfouzys/virtualenv/backend.tmfouzy.sg/3.9/bin/python"
 PassengerEnabled On
-PassengerAppRoot /home/tmfouzys/backend.tmfouzy.sg
 PassengerStartupFile passenger_wsgi.py
-PassengerPython /home/tmfouzys/virtualenv/backend.tmfouzy.sg/3.11/bin/python
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# Bypass Passenger for static/media files
+<LocationMatch "^/(static|media)/">
+    PassengerEnabled off
+</LocationMatch>
+
+# Static and Media Files Aliases
+Alias /static /home/tmfouzys/backend.tmfouzy.sg/staticfiles
+Alias /media /home/tmfouzys/backend.tmfouzy.sg/media
+
+<Directory /home/tmfouzys/backend.tmfouzy.sg/staticfiles>
+    Require all granted
+    Options -Indexes
+</Directory>
+
+<Directory /home/tmfouzys/backend.tmfouzy.sg/media>
+    Require all granted
+    Options -Indexes
+</Directory>
 
 # CORS Headers for Frontend Access
 <IfModule mod_headers.c>
@@ -28,30 +46,15 @@ PassengerPython /home/tmfouzys/virtualenv/backend.tmfouzy.sg/3.11/bin/python
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
+# Compression for faster loading
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+
 # Force HTTPS (uncomment after SSL is active)
 # <IfModule mod_rewrite.c>
 #     RewriteEngine On
 #     RewriteCond %{HTTPS} off
 #     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # </IfModule>
-
-# Serve static files directly
-<IfModule mod_alias.c>
-    Alias /static /home/tmfouzys/backend.tmfouzy.sg/staticfiles
-    Alias /media /home/tmfouzys/backend.tmfouzy.sg/media
-</IfModule>
-
-# Allow access to static and media directories
-<Directory /home/tmfouzys/backend.tmfouzy.sg/staticfiles>
-    Require all granted
-</Directory>
-
-<Directory /home/tmfouzys/backend.tmfouzy.sg/media>
-    Require all granted
-</Directory>
-
-# Compression for faster loading
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE application/json
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
-</IfModule>

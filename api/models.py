@@ -155,6 +155,8 @@ class Customer(models.Model):
     phone = models.CharField(max_length=20)
     address = models.TextField()
     unit_number = models.CharField(max_length=50, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
     postal_code = models.CharField(max_length=20)
     is_tour_leader = models.BooleanField(default=False, help_text='Mark this customer as a tour leader')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -425,3 +427,174 @@ class DiscountCode(models.Model):
             discount = self.discount_value
         
         return min(discount, amount)
+
+
+class DuaCategory(models.Model):
+    """Main category for duas (e.g., Umrah, Hajj, Daily Prayers, Travel)"""
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField(blank=True)
+    icon_name = models.CharField(max_length=100, help_text="Icon name from @expo/vector-icons")
+    icon_type = models.CharField(max_length=50, default='MaterialCommunityIcons', help_text="Icon library (MaterialCommunityIcons, Ionicons, FontAwesome5)")
+    color = models.CharField(max_length=20, default='#2e7d32', help_text="Hex color code")
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = 'Dua Categories'
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class DuaSubCategory(models.Model):
+    """Sub-category for duas (e.g., Niat, Tawaf, Sa'i, Tahallul)"""
+    category = models.ForeignKey(DuaCategory, on_delete=models.CASCADE, related_name='subcategories')
+    name = models.CharField(max_length=200)
+    slug = models.SlugField()
+    description = models.TextField(blank=True)
+    has_rounds = models.BooleanField(default=False, help_text="True if this subcategory has rounds (like Tawaf)")
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = 'Dua Sub-Categories'
+        ordering = ['order', 'name']
+        unique_together = ['category', 'slug']
+    
+    def __str__(self):
+        return f"{self.category.name} - {self.name}"
+
+
+class DuaRound(models.Model):
+    """Rounds for subcategories like Tawaf (First Round, Second Round, etc.)"""
+    subcategory = models.ForeignKey(DuaSubCategory, on_delete=models.CASCADE, related_name='rounds')
+    name = models.CharField(max_length=200, help_text="e.g., First Round, Second Round")
+    round_number = models.IntegerField()
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['order', 'round_number']
+        unique_together = ['subcategory', 'round_number']
+    
+    def __str__(self):
+        return f"{self.subcategory.name} - {self.name}"
+
+
+class Dua(models.Model):
+    """Individual dua with Arabic text, transliteration, and translation"""
+    subcategory = models.ForeignKey(DuaSubCategory, on_delete=models.CASCADE, related_name='duas', null=True, blank=True)
+    round = models.ForeignKey(DuaRound, on_delete=models.CASCADE, related_name='duas', null=True, blank=True, help_text="For duas that belong to a specific round")
+    
+    title = models.CharField(max_length=300)
+    arabic_text = models.TextField(help_text="Arabic text of the dua")
+    transliteration = models.TextField(help_text="Romanized pronunciation")
+    translation = models.TextField(help_text="English translation")
+    description = models.TextField(help_text="Context or when to recite this dua")
+    
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', 'created_at']
+    
+    def __str__(self):
+        if self.round:
+            return f"{self.round.subcategory.name} - {self.round.name} - {self.title}"
+        return f"{self.subcategory.name} - {self.title}"
+
+
+class CustomerDocument(models.Model):
+    """Documents uploaded by staff for customers (e.g., visa, tickets, itinerary)"""
+    DOCUMENT_TYPES = [
+        ('visa', 'Visa'),
+        ('ticket', 'Flight Ticket'),
+        ('hotel', 'Hotel Voucher'),
+        ('itinerary', 'Travel Itinerary'),
+        ('insurance', 'Travel Insurance'),
+        ('vaccination', 'Vaccination Certificate'),
+        ('passport', 'Passport Copy'),
+        ('other', 'Other'),
+    ]
+    
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='documents')
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='documents', null=True, blank=True, help_text="Optional: Link to specific booking")
+    
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    title = models.CharField(max_length=200, help_text="Document title (e.g., 'Saudi Visa', 'Flight Ticket - SQ123')")
+    description = models.TextField(blank=True, help_text="Additional notes about the document")
+    
+    file = models.FileField(upload_to='customer_documents/', help_text="Upload PDF, image, or document file")
+    file_size = models.IntegerField(blank=True, null=True, help_text="File size in bytes")
+    
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, help_text="Staff member who uploaded this")
+    
+    is_important = models.BooleanField(default=False, help_text="Mark as important/urgent document")
+    expiry_date = models.DateField(null=True, blank=True, help_text="Document expiry date (if applicable)")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-is_important', '-created_at']
+        verbose_name = 'Customer Document'
+        verbose_name_plural = 'Customer Documents'
+    
+    def __str__(self):
+        return f"{self.customer.email} - {self.title}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate file size if not set
+        if self.file and not self.file_size:
+            self.file_size = self.file.size
+        super().save(*args, **kwargs)
+
+
+class LiveAudioSession(models.Model):
+    """
+    Live Audio Streaming Session
+    Tracks active and past live audio broadcasts by tour leaders
+    """
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('ended', 'Ended'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='live_sessions')
+    channel_name = models.CharField(max_length=200, unique=True, help_text='Agora channel name')
+    title = models.CharField(max_length=300, default='Live Audio from Tour Leader')
+    tour_leader_email = models.EmailField()
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    listener_count = models.IntegerField(default=0, help_text='Number of customers who joined')
+    
+    started_at = models.DateTimeField()
+    ended_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-started_at']
+        verbose_name = 'Live Audio Session'
+        verbose_name_plural = 'Live Audio Sessions'
+    
+    def __str__(self):
+        return f"{self.title} - {self.package.name} ({self.status})"
+    
+    @property
+    def duration_minutes(self):
+        """Calculate session duration in minutes"""
+        if self.ended_at:
+            return (self.ended_at - self.started_at).total_seconds() / 60
+        return None
+    
+    @property
+    def is_active(self):
+        """Check if session is currently active"""
+        return self.status == 'active'
