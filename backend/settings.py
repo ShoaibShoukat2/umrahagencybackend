@@ -147,16 +147,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration (for OTP)
-# Live SMTP Configuration for tmfttotp@tmfouzy.sg
+# SMTP Configuration for website@hajj.tmfouzy.sg
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.tmfouzy.sg'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True  # Port 465 uses SSL
-EMAIL_USE_TLS = False  # SSL already enabled, no need for TLS
-EMAIL_HOST_USER = 'tmfttotp@tmfouzy.sg'
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-email-password-here')  # Load from .env file
-DEFAULT_FROM_EMAIL = 'tmfttotp@tmfouzy.sg'
-SERVER_EMAIL = 'tmfttotp@tmfouzy.sg'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.hajj.tmfouzy.sg')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = True  # Port 587 uses TLS
+EMAIL_USE_SSL = False  # TLS is used instead of SSL for port 587
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'website@hajj.tmfouzy.sg')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'website@hajj.tmfouzy.sg')
+SERVER_EMAIL = os.getenv('EMAIL_HOST_USER', 'website@hajj.tmfouzy.sg')
 
 # For testing, uncomment below to print to console instead:
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

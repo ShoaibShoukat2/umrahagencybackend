@@ -21,16 +21,29 @@ def generate_otp():
 def send_otp_email(email, otp):
     """Send OTP via email"""
     try:
-        subject = 'Your OTP for Umrah Agency'
+        subject = 'Email Verification - TM Fouzy Travel & Tours'
         message = f'''
-        Your OTP for verification is: {otp}
-        
-        This OTP is valid for 10 minutes.
-        
-        If you didn't request this, please ignore this email.
-        
-        Best regards,
-        Umrah Agency Team
+Dear Valued Customer,
+
+Thank you for registering with TM Fouzy Travel & Tours.
+
+Your email verification code is: {otp}
+
+This verification code is valid for 10 minutes only. Please enter this code in the app to complete your registration.
+
+If you did not request this verification, please ignore this email.
+
+For any assistance, please contact us:
+📞 +65 6294 8044
+📧 enquiry@tmfouzy.sg
+💬 WhatsApp: +65 9820 1134
+
+Best regards,
+TM Fouzy Travel & Tours Team
+UEN: 199402129H
+
+---
+This email was sent from website@hajj.tmfouzy.sg
         '''
         send_mail(
             subject,
@@ -93,8 +106,7 @@ def register(request):
     if send_otp_email(email, otp):
         return Response({
             'message': 'OTP sent to your email. Please verify to complete registration.',
-            'email': email,
-            'otp': otp  # Remove this in production! Only for testing
+            'email': email
         }, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Failed to send OTP. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -230,8 +242,7 @@ def request_otp(request):
     if send_otp_email(email, otp):
         return Response({
             'message': 'OTP sent to your email',
-            'email': email,
-            'otp': otp  # Remove in production
+            'email': email
         }, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
