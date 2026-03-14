@@ -94,9 +94,9 @@ def register(request):
     data = serializer.validated_data
     email = data['email']
     
-    # Check if user already exists
-    if User.objects.filter(username=email).exists():
-        return Response({'error': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    # Check if user already exists (check both username and email fields)
+    if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
+        return Response({'error': 'An account with this email already exists. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Generate OTP
     otp = generate_otp()
@@ -152,6 +152,12 @@ def verify_otp(request):
     
     # Create user account
     user_data = stored_data['user_data']
+
+    # Final check - user might have been created between OTP send and verify
+    if User.objects.filter(username=email).exists():
+        del otp_storage[email]
+        return Response({'error': 'An account with this email already exists. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         # Create Django user
         user = User.objects.create_user(
@@ -162,7 +168,7 @@ def verify_otp(request):
         )
         
         # Create Customer profile
-        customer = Customer.objects.create(
+        Customer.objects.create(
             user=user,
             email=email,
             phone=user_data['phone'],
@@ -170,7 +176,7 @@ def verify_otp(request):
             postal_code=user_data['postal_code']
         )
         
-        # Mark as verified and clean up
+        # Clean up OTP
         del otp_storage[email]
         
         return Response({
@@ -182,7 +188,10 @@ def verify_otp(request):
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
-        return Response({'error': f'Failed to create account: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        error_msg = str(e)
+        if 'UNIQUE constraint' in error_msg or 'already exists' in error_msg.lower():
+            return Response({'error': 'An account with this email already exists. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Failed to create account. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
