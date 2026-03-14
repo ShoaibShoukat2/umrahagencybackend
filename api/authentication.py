@@ -29,7 +29,7 @@ Thank you for registering with TM Fouzy Travel & Tours.
 
 Your email verification code is: {otp}
 
-This verification code is valid for 10 minutes only. Please enter this code in the app to complete your registration.
+This verification code is valid for 10 minutes only. Please enter this code to complete your registration.
 
 If you did not request this verification, please ignore this email.
 
@@ -41,9 +41,6 @@ For any assistance, please contact us:
 Best regards,
 TM Fouzy Travel & Tours Team
 UEN: 199402129H
-
----
-This email was sent from website@hajj.tmfouzy.sg
         '''
         send_mail(
             subject,
