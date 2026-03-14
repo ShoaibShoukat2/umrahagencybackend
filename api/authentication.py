@@ -100,13 +100,19 @@ def register(request):
     }
     
     # Send OTP via email
-    if send_otp_email(email, otp):
+    email_sent = send_otp_email(email, otp)
+    if email_sent:
         return Response({
             'message': 'OTP sent to your email. Please verify to complete registration.',
             'email': email
         }, status=status.HTTP_200_OK)
     else:
-        return Response({'error': 'Failed to send OTP. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Remove stored OTP so user can retry
+        if email in otp_storage:
+            del otp_storage[email]
+        return Response({
+            'error': 'Failed to send OTP email. Please check your email address and try again.'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
