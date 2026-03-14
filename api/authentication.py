@@ -156,9 +156,20 @@ def verify_otp(request):
     user_data = stored_data['user_data']
 
     # Final check - user might have been created between OTP send and verify
-    if User.objects.filter(username=email).exists():
+    if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
         del otp_storage[email]
         return Response({'error': 'An account with this email already exists. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Also check orphan Customer records
+    from api.models import Customer as CustomerModel
+    if CustomerModel.objects.filter(email=email).exists():
+        # Delete orphan customer (no linked user) and proceed, or block
+        orphan = CustomerModel.objects.filter(email=email).first()
+        if orphan.user is None:
+            orphan.delete()  # Clean up orphan
+        else:
+            del otp_storage[email]
+            return Response({'error': 'An account with this email already exists. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         # Create Django user
