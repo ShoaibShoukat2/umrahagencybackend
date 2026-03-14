@@ -19,15 +19,16 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp):
-    """Send OTP via email using direct SMTP to avoid Django config issues"""
+    """Send OTP via Gmail SMTP"""
     import smtplib
+    import ssl
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     import os
 
-    host = os.getenv('EMAIL_HOST', 'mail.tmfouzy.sg')
+    host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     port = int(os.getenv('EMAIL_PORT', '587'))
-    user = os.getenv('EMAIL_HOST_USER', 'Tmfttotp@tmfouzy.sg')
+    user = os.getenv('EMAIL_HOST_USER', 'tmfouzytravelsg@gmail.com')
     password = os.getenv('EMAIL_HOST_PASSWORD', '')
 
     subject = 'Email Verification - TM Fouzy Travel & Tours'
@@ -55,6 +56,7 @@ TM Fouzy Travel & Tours Team
 
         server = smtplib.SMTP(host, port, timeout=20)
         server.ehlo()
+        server.starttls(context=ssl.create_default_context())
         server.login(user, password)
         server.sendmail(user, email, msg.as_string())
         server.quit()

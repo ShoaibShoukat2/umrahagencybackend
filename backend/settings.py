@@ -148,14 +148,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration (for OTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.tmfouzy.sg')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = False
+EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'Tmfttotp@tmfouzy.sg')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'tmfouzytravelsg@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'Tmfttotp@tmfouzy.sg')
-SERVER_EMAIL = os.getenv('EMAIL_HOST_USER', 'Tmfttotp@tmfouzy.sg')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'tmfouzytravelsg@gmail.com')
+SERVER_EMAIL = os.getenv('EMAIL_HOST_USER', 'tmfouzytravelsg@gmail.com')
 EMAIL_TIMEOUT = 30
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
