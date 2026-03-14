@@ -19,36 +19,46 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp):
-    """Send OTP via email"""
-    try:
-        subject = 'Email Verification - TM Fouzy Travel & Tours'
-        message = f'''
-Dear Valued Customer,
+    """Send OTP via email using direct SMTP to avoid Django config issues"""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    import os
+
+    host = os.getenv('EMAIL_HOST', 'mail.tmfouzy.sg')
+    port = int(os.getenv('EMAIL_PORT', '587'))
+    user = os.getenv('EMAIL_HOST_USER', 'Tmfttotp@tmfouzy.sg')
+    password = os.getenv('EMAIL_HOST_PASSWORD', '')
+
+    subject = 'Email Verification - TM Fouzy Travel & Tours'
+    body = f"""Dear Valued Customer,
 
 Thank you for registering with TM Fouzy Travel & Tours.
 
 Your email verification code is: {otp}
 
-This verification code is valid for 10 minutes only. Please enter this code to complete your registration.
+This code is valid for 10 minutes only.
 
-If you did not request this verification, please ignore this email.
-
-For any assistance, please contact us:
-📞 +65 6294 8044
-📧 enquiry@tmfouzy.sg
-💬 WhatsApp: +65 9820 1134
+If you did not request this, please ignore this email.
 
 Best regards,
 TM Fouzy Travel & Tours Team
-UEN: 199402129H
-        '''
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
+📞 +65 6294 8044 | enquiry@tmfouzy.sg
+"""
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = user
+        msg['To'] = email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP(host, port, timeout=20)
+        server.ehlo()
+        server.login(user, password)
+        server.sendmail(user, email, msg.as_string())
+        server.quit()
+        print(f"OTP email sent successfully to {email}")
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
