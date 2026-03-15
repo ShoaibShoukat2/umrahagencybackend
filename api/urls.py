@@ -31,7 +31,7 @@ urlpatterns = [
     path('create-booking/', create_booking, name='create-booking'),
     path('create-item-order/', create_item_order, name='create-item-order'),
     path('contact/', submit_contact_message, name='submit-contact'),
-    path('item-orders/', get_customer_item_orders, name='customer-item-orders'),
+
     path('validate-discount/', validate_discount_code, name='validate-discount'),
     path('bookings/<int:booking_id>/invoice/', get_booking_invoice, name='booking-invoice'),
     path('payments/<int:payment_id>/receipt/', get_payment_receipt, name='payment-receipt'),

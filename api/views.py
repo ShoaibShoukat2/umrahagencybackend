@@ -521,7 +521,18 @@ def create_item_order(request):
         customer = Customer.objects.filter(email=customer_email).first()
         
         if not customer:
-            return Response({'error': 'Customer not found'}, status=status.HTTP_400_BAD_REQUEST)
+            # Auto-create customer from Django user if exists
+            from django.contrib.auth.models import User as DjangoUser
+            try:
+                django_user = DjangoUser.objects.get(username=customer_email)
+                customer = Customer.objects.create(
+                    user=django_user,
+                    email=customer_email,
+                    phone=data.get('shipping_phone', ''),
+                    address=data.get('shipping_address', '')
+                )
+            except DjangoUser.DoesNotExist:
+                return Response({'error': 'Customer not found. Please login first.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Handle discount code if provided
         discount_code_obj = None
@@ -546,6 +557,10 @@ def create_item_order(request):
             shipping_address=data['shipping_address'],
             shipping_unit=data.get('shipping_unit', ''),
             shipping_postal=data['shipping_postal'],
+            shipping_name=data.get('shipping_name', ''),
+            shipping_phone=data.get('shipping_phone', ''),
+            shipping_city=data.get('shipping_city', ''),
+            shipping_country=data.get('shipping_country', ''),
             payment_screenshot=payment_screenshot,
             status='pending'
         )
