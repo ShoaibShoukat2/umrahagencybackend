@@ -223,11 +223,20 @@ def login(request):
     if user is None:
         return Response({'error': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
     
+    # Generate JWT tokens
+    from rest_framework_simplejwt.tokens import RefreshToken
+    refresh = RefreshToken.for_user(user)
+    tokens = {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+    
     # Get customer profile
     try:
         customer = Customer.objects.get(user=user)
         return Response({
             'message': 'Login successful',
+            'tokens': tokens,
             'user': {
                 'id': user.id,
                 'email': user.email,
@@ -242,6 +251,7 @@ def login(request):
     except Customer.DoesNotExist:
         return Response({
             'message': 'Login successful',
+            'tokens': tokens,
             'user': {
                 'id': user.id,
                 'email': user.email,
