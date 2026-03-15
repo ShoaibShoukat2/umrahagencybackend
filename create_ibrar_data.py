@@ -10,7 +10,7 @@ django.setup()
 from django.contrib.auth.models import User
 from api.models import Customer, Category, Package, Booking, BookingRoom, Passenger, Payment
 from decimal import Decimal
-from datetime import date, timedelta
+from datetime import date
 import random, string
 
 def make_booking_number():
@@ -19,23 +19,18 @@ def make_booking_number():
 def make_payment_number():
     return 'PAY' + ''.join(random.choices(string.digits, k=6))
 
-# ── 1. Create User ──────────────────────────────────────────────
 email = 'ibrar@gmail.com'
-password = 'ibrar1234'
 
-user, created = User.objects.get_or_create(
-    username=email,
-    defaults={'email': email, 'first_name': 'Ibrar Ahmed'}
-)
-if created:
-    user.set_password(password)
-    user.save()
-    print(f'✅ User created: {email}')
-else:
-    print(f'ℹ️  User already exists: {email}')
+# ── 1. Find existing user ───────────────────────────────────────
+try:
+    user = User.objects.get(username=email)
+    print(f'✅ User found: {user.username} (id={user.id})')
+except User.DoesNotExist:
+    print(f'❌ User {email} not found. Please register first.')
+    exit(1)
 
-# ── 2. Create Customer profile ──────────────────────────────────
-customer, _ = Customer.objects.get_or_create(
+# ── 2. Get or create Customer profile ──────────────────────────
+customer, created = Customer.objects.get_or_create(
     email=email,
     defaults={
         'user': user,
@@ -49,7 +44,7 @@ customer, _ = Customer.objects.get_or_create(
 if not customer.user:
     customer.user = user
     customer.save()
-print(f'✅ Customer profile ready')
+print(f'✅ Customer profile ready ({"created" if created else "existing"})')
 
 # ── 3. Get or create Category ───────────────────────────────────
 category, _ = Category.objects.get_or_create(
@@ -77,7 +72,7 @@ package, _ = Package.objects.get_or_create(
         'duration_days': 14,
         'duration_nights': 13,
         'location': 'Makkah & Madinah, Saudi Arabia',
-        'inclusions': 'Return flights\n5-star hotel in Makkah (7 nights)\n5-star hotel in Madinah (6 nights)\nAll meals (breakfast, lunch, dinner)\nAirport transfers\nGuided Ziyarah tours\nUmrah visa\nTravel insurance',
+        'inclusions': 'Return flights\n5-star hotel in Makkah (7 nights)\n5-star hotel in Madinah (6 nights)\nAll meals\nAirport transfers\nGuided Ziyarah tours\nUmrah visa\nTravel insurance',
         'exclusions': 'Personal expenses\nOptional tours\nLaundry',
         'complimentary_items': 'Prayer mat\nZamzam bottle (5L)\nIhram set\nUmrah guide book',
         'featured_image': 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800',
@@ -117,11 +112,11 @@ else:
         emergency_phone='+65 9876 5432',
         emergency_relationship='Spouse',
         special_requests='Wheelchair assistance needed at airport',
-        remarks='VIP customer - handle with care',
+        remarks='VIP customer',
     )
     print(f'✅ Booking created: {booking.booking_number}')
 
-# ── 6. Create BookingRoom + Passengers ─────────────────────────
+# ── 6. Create Room + Passengers ─────────────────────────────────
 if not booking.rooms.exists():
     room = BookingRoom.objects.create(
         booking=booking,
@@ -133,7 +128,6 @@ if not booking.rooms.exists():
         num_infants=0,
         subtotal=Decimal('3800.00'),
     )
-
     Passenger.objects.create(
         booking_room=room,
         passenger_type='adult',
@@ -145,7 +139,6 @@ if not booking.rooms.exists():
         passport_expiry=date(2030, 6, 14),
         passport_issue_date=date(2020, 6, 15),
     )
-
     Passenger.objects.create(
         booking_room=room,
         passenger_type='adult',
@@ -161,7 +154,7 @@ if not booking.rooms.exists():
 else:
     print(f'ℹ️  Room already exists')
 
-# ── 7. Create Payment record ────────────────────────────────────
+# ── 7. Create Payment ───────────────────────────────────────────
 if not booking.payments.exists():
     Payment.objects.create(
         booking=booking,
@@ -171,17 +164,15 @@ if not booking.payments.exists():
         payment_method='bank_transfer',
         status='completed',
         transaction_id='TXN-SG-2026-001',
-        notes='Initial deposit payment via PayNow',
+        notes='Initial deposit via PayNow',
     )
-    print(f'✅ Payment record created: $1500.00')
+    print(f'✅ Payment created: $1500.00')
 else:
     print(f'ℹ️  Payment already exists')
 
 print()
 print('=' * 50)
-print(f'✅ ALL DONE!')
-print(f'   Email   : {email}')
-print(f'   Password: {password}')
+print(f'✅ DONE!')
 print(f'   Booking : {booking.booking_number}')
 print(f'   Status  : {booking.status}')
 print(f'   Package : {package.name}')
