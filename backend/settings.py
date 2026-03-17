@@ -36,11 +36,15 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Allowed hosts for production
 ALLOWED_HOSTS = [
+    'Tmfauwaz.pythonanywhere.com',
+    'tmfauwaz.pythonanywhere.com',
     'backend.tmfouzy.sg',
     'www.backend.tmfouzy.sg',
+    'tmfouzy.sg',
+    'www.tmfouzy.sg',
     'localhost',
     '127.0.0.1',
-    '192.168.100.13',  # Your local IP for mobile testing
+    '192.168.100.13',  # Local IP for mobile testing
     '*',  # Allow all for development
 ]
 
