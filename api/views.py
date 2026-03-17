@@ -18,7 +18,7 @@ class PackageViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PackageListSerializer
     lookup_field = 'slug'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category__slug']
+    filterset_fields = ['category__slug', 'duration_days']
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['travel_date', 'created_at']
     
