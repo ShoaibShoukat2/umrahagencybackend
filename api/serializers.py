@@ -156,7 +156,8 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'min_deposit_amount': {'required': False},
             'hotel_name': {'required': False, 'allow_blank': True},
             'hotel_country': {'required': False, 'allow_blank': True},
-            'hotel_image': {'required': False, 'allow_null': True},
+            'hotel_image': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'featured_image': {'required': False, 'allow_null': True, 'allow_blank': True},
             'complimentary_items': {'required': False, 'allow_blank': True},
         }
 
@@ -172,6 +173,10 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
         # Default min_deposit_amount
         if not data.get('min_deposit_amount'):
             data['min_deposit_amount'] = 100
+        # Convert empty URL strings to None
+        for url_field in ['hotel_image', 'featured_image']:
+            if url_field in data and data[url_field] == '':
+                data[url_field] = None
         return data
 
 
