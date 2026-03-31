@@ -41,7 +41,7 @@ class PackageListSerializer(serializers.ModelSerializer):
         model = Package
         fields = ['id', 'name', 'slug', 'short_description', 'travel_date', 'return_date', 
                   'duration_days', 'duration_nights', 'location', 'featured_image', 
-                  'is_featured', 'category_name', 'min_price', 'tags', 'max_capacity', 
+                  'is_featured', 'is_active', 'category_name', 'min_price', 'tags', 'max_capacity', 
                   'registered_pax', 'balance_seats']
     
     def get_min_price(self, obj):
@@ -49,14 +49,17 @@ class PackageListSerializer(serializers.ModelSerializer):
         return float(min_price.price) if min_price else 0
     
     def get_registered_pax(self, obj):
-        # Count all passengers from confirmed and pending bookings
         try:
             from django.db.models import Q
-            bookings = obj.bookings.filter(Q(status='confirmed') | Q(status='pending'))
+            bookings = obj.bookings.filter(Q(status='confirmed') | Q(status='pending') | Q(status='completed'))
             total_pax = 0
             for booking in bookings:
                 for room in booking.rooms.all():
-                    total_pax += room.passengers.count()
+                    pax = room.passengers.count()
+                    if pax > 0:
+                        total_pax += pax
+                    else:
+                        total_pax += (room.num_adults or 0) + (room.num_children or 0) + (room.num_infants or 0)
             return total_pax
         except Exception as e:
             print(f"Error calculating registered_pax for package {obj.id}: {e}")
@@ -111,14 +114,17 @@ class PackageDetailSerializer(serializers.ModelSerializer):
         return None
     
     def get_registered_pax(self, obj):
-        # Count all passengers from confirmed and pending bookings
         try:
             from django.db.models import Q
-            bookings = obj.bookings.filter(Q(status='confirmed') | Q(status='pending'))
+            bookings = obj.bookings.filter(Q(status='confirmed') | Q(status='pending') | Q(status='completed'))
             total_pax = 0
             for booking in bookings:
                 for room in booking.rooms.all():
-                    total_pax += room.passengers.count()
+                    pax = room.passengers.count()
+                    if pax > 0:
+                        total_pax += pax
+                    else:
+                        total_pax += (room.num_adults or 0) + (room.num_children or 0) + (room.num_infants or 0)
             return total_pax
         except Exception as e:
             print(f"Error calculating registered_pax for package {obj.id}: {e}")
