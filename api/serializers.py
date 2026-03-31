@@ -147,32 +147,32 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'location', 'travel_date', 'return_date', 'duration_days', 'duration_nights',
             'featured_image', 'is_featured', 'is_active', 'max_capacity', 'min_deposit_amount',
             'hotel_name', 'hotel_star_rating', 'hotel_country', 'hotel_image',
-            'complimentary_items', 'special_requests',
+            'complimentary_items',
         ]
         extra_kwargs = {
-            'slug': {'required': False},
+            'slug': {'required': False, 'allow_blank': True},
             'description': {'required': False, 'allow_blank': True},
+            'short_description': {'required': False, 'allow_blank': True},
             'min_deposit_amount': {'required': False},
+            'hotel_name': {'required': False, 'allow_blank': True},
+            'hotel_country': {'required': False, 'allow_blank': True},
+            'hotel_image': {'required': False, 'allow_null': True},
+            'complimentary_items': {'required': False, 'allow_blank': True},
         }
 
-    def validate_slug(self, value):
+    def validate(self, data):
         # Auto-generate slug from name if empty
-        if not value:
+        if not data.get('slug'):
             import re
-            name = self.initial_data.get('name', '')
-            value = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
-        return value
-
-    def validate_description(self, value):
+            name = data.get('name', '')
+            data['slug'] = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
         # Fall back to short_description if description is empty
-        if not value:
-            return self.initial_data.get('short_description', '') or ''
-        return value
-
-    def validate_min_deposit_amount(self, value):
-        if not value:
-            return 100
-        return value
+        if not data.get('description'):
+            data['description'] = data.get('short_description', '') or ''
+        # Default min_deposit_amount
+        if not data.get('min_deposit_amount'):
+            data['min_deposit_amount'] = 100
+        return data
 
 
 class TravelItemSerializer(serializers.ModelSerializer):
