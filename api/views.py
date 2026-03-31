@@ -933,11 +933,24 @@ def get_payment_receipt(request, payment_id):
 class AdminPackageViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on packages"""
     queryset = Package.objects.all()
-    serializer_class = PackageDetailSerializer
-    
+
     def get_permissions(self):
-        # Add permission check for admin users
         return []
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return AdminPackageWriteSerializer
+        return PackageDetailSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        # Return full detail after save
+        return Response(PackageDetailSerializer(instance).data)
     
 class AdminCategoryViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on categories"""

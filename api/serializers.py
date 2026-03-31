@@ -138,6 +138,43 @@ class PackageDetailSerializer(serializers.ModelSerializer):
             print(f"Error calculating balance_seats for package {obj.id}: {e}")
             return 0
 
+class AdminPackageWriteSerializer(serializers.ModelSerializer):
+    """Serializer for admin create/update — accepts all writable fields directly"""
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'name', 'slug', 'category', 'short_description', 'description',
+            'location', 'travel_date', 'return_date', 'duration_days', 'duration_nights',
+            'featured_image', 'is_featured', 'is_active', 'max_capacity', 'min_deposit_amount',
+            'hotel_name', 'hotel_star_rating', 'hotel_country', 'hotel_image',
+            'complimentary_items', 'special_requests',
+        ]
+        extra_kwargs = {
+            'slug': {'required': False},
+            'description': {'required': False, 'allow_blank': True},
+            'min_deposit_amount': {'required': False},
+        }
+
+    def validate_slug(self, value):
+        # Auto-generate slug from name if empty
+        if not value:
+            import re
+            name = self.initial_data.get('name', '')
+            value = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+        return value
+
+    def validate_description(self, value):
+        # Fall back to short_description if description is empty
+        if not value:
+            return self.initial_data.get('short_description', '') or ''
+        return value
+
+    def validate_min_deposit_amount(self, value):
+        if not value:
+            return 100
+        return value
+
+
 class TravelItemSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     
