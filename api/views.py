@@ -951,6 +951,30 @@ class AdminPackageViewSet(viewsets.ModelViewSet):
         serializer.save()
         # Return full detail after save
         return Response(PackageDetailSerializer(instance).data)
+
+    @action(detail=True, methods=['post'])
+    def update_room_price(self, request, pk=None):
+        """Create or update a room price for a package"""
+        package = self.get_object()
+        sharing_type = request.data.get('sharing_type')
+        price = request.data.get('price')
+        available = request.data.get('available', True)
+
+        if not sharing_type or price is None:
+            return Response({'error': 'sharing_type and price are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        room_price, created = RoomSharingPrice.objects.update_or_create(
+            package=package,
+            sharing_type=sharing_type,
+            defaults={'price': price, 'available': available}
+        )
+        return Response({
+            'id': room_price.id,
+            'sharing_type': room_price.sharing_type,
+            'price': str(room_price.price),
+            'available': room_price.available,
+            'created': created
+        })
     
 class AdminCategoryViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on categories"""
