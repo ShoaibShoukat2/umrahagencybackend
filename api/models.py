@@ -39,7 +39,7 @@ class Package(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='packages')
     name = models.CharField(max_length=300)
     slug = models.SlugField(unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, default='')
     short_description = models.CharField(max_length=500, blank=True)
     
     travel_date = models.DateField()
