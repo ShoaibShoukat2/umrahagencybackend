@@ -103,7 +103,7 @@ def generate_bag_tag(request, customer_id):
         # Get room assignment
         room = booking.rooms.first()
         room_number = room.room_number if room else 'TBA'
-        hotel_name = room.hotel_name if room else 'TBA'
+        hotel_name = getattr(booking.package, 'hotel_name', '') or 'TBA'
         
         # Prepare customer data
         customer_data = {
@@ -297,7 +297,7 @@ def scan_qr_code(request, qr_type, customer_id):
             },
             'room': {
                 'room_number': room.room_number if room else None,
-                'hotel_name': room.hotel_name if room else None,
+                'hotel_name': getattr(booking.package, 'hotel_name', '') or 'TBA',
                 'room_type': room.sharing_type if room else None
             } if room else None,
             'emergency_contact': {
@@ -360,7 +360,7 @@ def bulk_generate_tags(request, package_id):
             if room:
                 customer_data.update({
                     'room_number': room.room_number,
-                    'hotel_name': room.hotel_name
+                    'hotel_name': getattr(package, 'hotel_name', '') or 'TBA'
                 })
             
             # Prepare package data

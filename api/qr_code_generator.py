@@ -279,19 +279,18 @@ def generate_rooming_list_data(package_id):
         }
         
         for booking in bookings:
-            # Get room assignments from booking rooms
             for room in booking.rooms.all():
-                room_key = f"{room.hotel_name} - Room {room.room_number}"
-                
+                hotel = getattr(package, 'hotel_name', '') or 'Hotel TBA'
+                room_key = f"{hotel} - Room {room.room_number}"
+
                 if room_key not in rooming_data['rooms']:
                     rooming_data['rooms'][room_key] = {
-                        'hotel_name': room.hotel_name,
+                        'hotel_name': hotel,
                         'room_number': room.room_number,
                         'room_type': room.sharing_type,
                         'customers': []
                     }
-                
-                # Add passengers to room
+
                 for passenger in room.passengers.all():
                     customer_info = {
                         'id': passenger.id,
