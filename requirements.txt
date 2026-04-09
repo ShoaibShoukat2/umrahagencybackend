@@ -6,3 +6,4 @@ django-filter>=23.0
 Pillow>=10.0.0
 python-dotenv==1.0.1
 reportlab>=4.0.0
+agora-token-builder>=1.0.0
