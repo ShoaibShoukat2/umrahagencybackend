@@ -14,6 +14,23 @@ from datetime import datetime, timedelta
 # Store OTPs temporarily (in production, use Redis or database)
 otp_storage = {}
 
+
+def _customer_user_payload(user, customer):
+    """Serialize user + customer fields for mobile app."""
+    return {
+        'id': user.id,
+        'email': user.email,
+        'name': user.first_name,
+        'phone': customer.phone,
+        'address': customer.address,
+        'city': customer.city,
+        'country': customer.country,
+        'postal_code': customer.postal_code,
+        'is_tour_leader': customer.is_tour_leader,
+        'is_staff': user.is_staff,
+    }
+
+
 def generate_otp():
     """Generate 6-digit OTP"""
     return ''.join(random.choices(string.digits, k=6))
@@ -237,16 +254,7 @@ def login(request):
         return Response({
             'message': 'Login successful',
             'tokens': tokens,
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'name': user.first_name,
-                'phone': customer.phone,
-                'address': customer.address,
-                'city': customer.city,
-                'country': customer.country,
-                'postal_code': customer.postal_code
-            }
+            'user': _customer_user_payload(user, customer),
         }, status=status.HTTP_200_OK)
     except Customer.DoesNotExist:
         return Response({
@@ -362,6 +370,29 @@ def admin_login(request):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_push_token(request):
+    """Register Expo push token for live audio and alerts."""
+    email = request.data.get('email')
+    token = request.data.get('token')
+
+    if not email or not token:
+        return Response(
+            {'error': 'email and token are required'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    customer = Customer.objects.filter(email=email).first()
+    if not customer:
+        return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    customer.expo_push_token = token
+    customer.save(update_fields=['expo_push_token'])
+
+    return Response({'success': True, 'message': 'Push token registered'})
+
+
 @api_view(['PUT'])
 @permission_classes([AllowAny])
 def update_profile(request):
@@ -397,16 +428,7 @@ def update_profile(request):
         
         return Response({
             'message': 'Profile updated successfully',
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'name': user.first_name,
-                'phone': customer.phone,
-                'address': customer.address,
-                'city': customer.city,
-                'country': customer.country,
-                'postal_code': customer.postal_code
-            }
+            'user': _customer_user_payload(user, customer),
         }, status=status.HTTP_200_OK)
         
     except User.DoesNotExist:

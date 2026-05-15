@@ -285,54 +285,93 @@ def get_active_sessions(request):
 
 def send_live_audio_notification(package_id, channel_name, title, customer_emails):
     """
-    Send push notification to customers via Firebase Cloud Messaging
-    
-    Args:
-        package_id: Package ID
-        channel_name: Agora channel name
-        title: Broadcast title
-        customer_emails: List of customer emails
+    Notify customers when tour leader goes live (Expo Push + optional FCM topic).
     """
+    send_expo_push_notifications(package_id, channel_name, title, customer_emails)
+    send_fcm_topic_notification(package_id, channel_name, title)
+
+
+def send_expo_push_notifications(package_id, channel_name, title, customer_emails):
+    """Send via Expo Push API to registered device tokens."""
     try:
-        # Get Firebase Server Key from settings
-        fcm_server_key = getattr(settings, 'FCM_SERVER_KEY', '')
-        
-        if not fcm_server_key:
-            print('Warning: FCM_SERVER_KEY not configured')
+        tokens = list(
+            Customer.objects.filter(
+                email__in=customer_emails,
+            ).exclude(expo_push_token='').values_list('expo_push_token', flat=True)
+        )
+        tokens = [t for t in tokens if t]
+
+        if not tokens:
+            print('ℹ️ No Expo push tokens registered for package customers')
             return
-        
-        # FCM API endpoint
+
+        messages = [
+            {
+                'to': token,
+                'title': '🔴 Tour Leader is Live!',
+                'body': title,
+                'sound': 'default',
+                'priority': 'high',
+                'data': {
+                    'type': 'live_audio',
+                    'channel_name': channel_name,
+                    'package_id': str(package_id),
+                    'title': title,
+                },
+            }
+            for token in tokens
+        ]
+
+        response = requests.post(
+            'https://exp.host/--/api/v2/push/send',
+            json=messages,
+            headers={
+                'Accept': 'application/json',
+                'Accept-Encoding': 'gzip, deflate',
+                'Content-Type': 'application/json',
+            },
+            timeout=15,
+        )
+
+        if response.status_code == 200:
+            print(f'✅ Expo push sent to {len(tokens)} device(s) for package {package_id}')
+        else:
+            print(f'❌ Expo push failed: {response.text}')
+    except Exception as e:
+        print(f'❌ Error sending Expo push: {str(e)}')
+
+
+def send_fcm_topic_notification(package_id, channel_name, title):
+    """Optional legacy FCM topic broadcast."""
+    try:
+        fcm_server_key = getattr(settings, 'FCM_SERVER_KEY', '')
+        if not fcm_server_key:
+            return
+
         fcm_url = 'https://fcm.googleapis.com/fcm/send'
-        
-        # Notification payload
         notification_data = {
-            'to': f'/topics/package_{package_id}',  # Send to package topic
+            'to': f'/topics/package_{package_id}',
             'notification': {
                 'title': '🔴 Tour Leader is Live!',
                 'body': title,
                 'sound': 'default',
-                'priority': 'high'
+                'priority': 'high',
             },
             'data': {
                 'type': 'live_audio',
                 'channel_name': channel_name,
                 'package_id': str(package_id),
-                'title': title
-            }
+                'title': title,
+            },
         }
-        
         headers = {
             'Authorization': f'key={fcm_server_key}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         }
-        
-        # Send notification
-        response = requests.post(fcm_url, json=notification_data, headers=headers)
-        
+        response = requests.post(fcm_url, json=notification_data, headers=headers, timeout=15)
         if response.status_code == 200:
-            print(f'✅ Push notification sent to package_{package_id}')
+            print(f'✅ FCM topic notification sent to package_{package_id}')
         else:
-            print(f'❌ Failed to send push notification: {response.text}')
-            
+            print(f'❌ FCM notification failed: {response.text}')
     except Exception as e:
-        print(f'❌ Error sending push notification: {str(e)}')
+        print(f'❌ Error sending FCM notification: {str(e)}')

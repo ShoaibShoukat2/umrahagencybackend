@@ -159,6 +159,7 @@ class Customer(models.Model):
     country = models.CharField(max_length=100, blank=True)
     postal_code = models.CharField(max_length=20)
     is_tour_leader = models.BooleanField(default=False, help_text='Mark this customer as a tour leader')
+    expo_push_token = models.CharField(max_length=512, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

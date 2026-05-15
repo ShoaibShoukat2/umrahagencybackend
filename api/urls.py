@@ -1,7 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import *
-from .authentication import register, verify_otp, login, request_otp, reset_password, admin_login, update_profile
+from .authentication import (
+    register, verify_otp, login, request_otp, reset_password,
+    admin_login, update_profile, register_push_token,
+)
 from .chatbot import chat_with_ai
 from .live_audio import start_live_audio, join_live_audio, end_live_audio, get_active_sessions
 from .qr_views import (
@@ -50,6 +53,7 @@ urlpatterns = [
     path('auth/request-otp/', request_otp, name='request-otp'),
     path('auth/reset-password/', reset_password, name='reset-password'),
     path('auth/profile/', update_profile, name='update-profile'),
+    path('auth/register-push-token/', register_push_token, name='register-push-token'),
     
     # Admin endpoints
     path('admin/login/', admin_login, name='admin-login'),
