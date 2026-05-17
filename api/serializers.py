@@ -222,12 +222,54 @@ class PaymentSerializer(serializers.ModelSerializer):
             return obj.booking.contact_name
         return None
 
+class BookingPackageSummarySerializer(serializers.ModelSerializer):
+    """Nested package info for booking list/detail (mobile + portal)."""
+    tour_leader_name = serializers.SerializerMethodField()
+    tour_leader_email = serializers.SerializerMethodField()
+    tour_leader_phone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'name', 'slug', 'travel_date', 'return_date',
+            'duration_days', 'duration_nights', 'location',
+            'hotel_name', 'hotel_star_rating', 'hotel_country',
+            'tour_leader_name', 'tour_leader_email', 'tour_leader_phone',
+        ]
+
+    def get_tour_leader_name(self, obj):
+        if not obj.tour_leader:
+            return None
+        if obj.tour_leader.user:
+            name = f"{obj.tour_leader.user.first_name} {obj.tour_leader.user.last_name}".strip()
+            if name:
+                return name
+        booking = obj.tour_leader.bookings.first()
+        if booking:
+            return booking.contact_name
+        return obj.tour_leader.email
+
+    def get_tour_leader_email(self, obj):
+        return obj.tour_leader.email if obj.tour_leader else None
+
+    def get_tour_leader_phone(self, obj):
+        if not obj.tour_leader:
+            return None
+        booking = obj.tour_leader.bookings.first()
+        if booking:
+            return booking.contact_phone
+        return obj.tour_leader.phone
+
+
 class BookingSerializer(serializers.ModelSerializer):
     rooms = BookingRoomSerializer(many=True, read_only=True)
     booking_addons = BookingAddOnSerializer(many=True, read_only=True)
     payments = PaymentSerializer(many=True, read_only=True)
     package_name = serializers.CharField(source='package.name', read_only=True)
-    
+    package = BookingPackageSummarySerializer(read_only=True)
+    package_id = serializers.IntegerField(source='package.id', read_only=True)
+    customer_name = serializers.CharField(source='contact_name', read_only=True)
+
     class Meta:
         model = Booking
         fields = '__all__'

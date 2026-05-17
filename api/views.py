@@ -320,11 +320,13 @@ class BookingViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = BookingSerializer
     
     def get_queryset(self):
+        qs = Booking.objects.select_related(
+            'package', 'package__tour_leader', 'package__tour_leader__user', 'customer',
+        )
         email = self.request.query_params.get('email', None)
         if email:
-            return Booking.objects.filter(customer__email=email).order_by('-created_at')
-        # For admin: return all bookings if no email filter
-        return Booking.objects.all().order_by('-created_at')
+            return qs.filter(customer__email=email).order_by('-created_at')
+        return qs.order_by('-created_at')
     
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):

@@ -14,6 +14,44 @@ import requests
 from django.conf import settings
 
 
+def _can_broadcast(package, tour_leader_email):
+    """Tour leader must exist and be authorized for this package."""
+    leader = Customer.objects.filter(email=tour_leader_email).first()
+    if not leader:
+        return False, 'Tour leader account not found'
+
+    if leader.is_tour_leader:
+        if package.tour_leader_id and package.tour_leader_id != leader.id:
+            return False, 'This tour leader is not assigned to the selected package'
+        return True, None
+
+    if package.tour_leader_id and package.tour_leader.email == tour_leader_email:
+        return True, None
+
+    return False, 'Only assigned tour leaders can start a live broadcast'
+
+
+def _can_end_session(session, tour_leader_email):
+    """Only the session starter or assigned package tour leader can end."""
+    if not tour_leader_email:
+        return False, 'tour_leader_email is required to end broadcast'
+
+    if session.tour_leader_email == tour_leader_email:
+        return True, None
+
+    leader = Customer.objects.filter(email=tour_leader_email).first()
+    if not leader:
+        return False, 'Tour leader account not found'
+
+    if session.package.tour_leader_id and session.package.tour_leader.email == tour_leader_email:
+        return True, None
+
+    if leader.is_tour_leader and leader.email == session.tour_leader_email:
+        return True, None
+
+    return False, 'Not authorized to end this broadcast'
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def start_live_audio(request):
@@ -47,9 +85,10 @@ def start_live_audio(request):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Verify tour leader
-        # In production, add proper authentication check
-        
+        allowed, err = _can_broadcast(package, tour_leader_email)
+        if not allowed:
+            return Response({'error': err}, status=status.HTTP_403_FORBIDDEN)
+
         # Generate channel name
         channel_name = f"package_{package_id}_{int(timezone.now().timestamp())}"
         
@@ -78,9 +117,10 @@ def start_live_audio(request):
         # Send push notifications to all customers
         send_live_audio_notification(
             package_id=package_id,
+            session_id=session.id,
             channel_name=channel_name,
             title=title,
-            customer_emails=customer_emails
+            customer_emails=customer_emails,
         )
         
         return Response({
@@ -198,11 +238,13 @@ def end_live_audio(request):
     
     Request body:
     {
-        "session_id": 123
+        "session_id": 123,
+        "tour_leader_email": "leader@example.com"
     }
     """
     try:
         session_id = request.data.get('session_id')
+        tour_leader_email = request.data.get('tour_leader_email')
         
         if not session_id:
             return Response(
@@ -212,12 +254,16 @@ def end_live_audio(request):
         
         # Get session
         try:
-            session = LiveAudioSession.objects.get(id=session_id)
+            session = LiveAudioSession.objects.select_related('package', 'package__tour_leader').get(id=session_id)
         except LiveAudioSession.DoesNotExist:
             return Response(
                 {'error': 'Session not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+        allowed, err = _can_end_session(session, tour_leader_email)
+        if not allowed:
+            return Response({'error': err}, status=status.HTTP_403_FORBIDDEN)
         
         # End session
         session.status = 'ended'
@@ -283,15 +329,15 @@ def get_active_sessions(request):
         )
 
 
-def send_live_audio_notification(package_id, channel_name, title, customer_emails):
+def send_live_audio_notification(package_id, session_id, channel_name, title, customer_emails):
     """
     Notify customers when tour leader goes live (Expo Push + optional FCM topic).
     """
-    send_expo_push_notifications(package_id, channel_name, title, customer_emails)
-    send_fcm_topic_notification(package_id, channel_name, title)
+    send_expo_push_notifications(package_id, session_id, channel_name, title, customer_emails)
+    send_fcm_topic_notification(package_id, session_id, channel_name, title)
 
 
-def send_expo_push_notifications(package_id, channel_name, title, customer_emails):
+def send_expo_push_notifications(package_id, session_id, channel_name, title, customer_emails):
     """Send via Expo Push API to registered device tokens."""
     try:
         tokens = list(
@@ -314,6 +360,7 @@ def send_expo_push_notifications(package_id, channel_name, title, customer_email
                 'priority': 'high',
                 'data': {
                     'type': 'live_audio',
+                    'session_id': str(session_id),
                     'channel_name': channel_name,
                     'package_id': str(package_id),
                     'title': title,
@@ -341,7 +388,7 @@ def send_expo_push_notifications(package_id, channel_name, title, customer_email
         print(f'❌ Error sending Expo push: {str(e)}')
 
 
-def send_fcm_topic_notification(package_id, channel_name, title):
+def send_fcm_topic_notification(package_id, session_id, channel_name, title):
     """Optional legacy FCM topic broadcast."""
     try:
         fcm_server_key = getattr(settings, 'FCM_SERVER_KEY', '')
@@ -359,6 +406,7 @@ def send_fcm_topic_notification(package_id, channel_name, title):
             },
             'data': {
                 'type': 'live_audio',
+                'session_id': str(session_id),
                 'channel_name': channel_name,
                 'package_id': str(package_id),
                 'title': title,
