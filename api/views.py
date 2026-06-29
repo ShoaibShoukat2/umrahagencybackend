@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, mixins
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -316,7 +316,7 @@ def create_booking(request):
         print(traceback.format_exc())
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class BookingViewSet(viewsets.ReadOnlyModelViewSet):
+class BookingViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = BookingSerializer
     
     def get_queryset(self):
@@ -433,7 +433,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return Customer.objects.none()
 
 
-class ItemOrderViewSet(viewsets.ReadOnlyModelViewSet):
+class ItemOrderViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = ItemOrderSerializer
     
     def get_queryset(self):
@@ -1285,30 +1285,45 @@ def get_customer_documents(request):
         return Response({'error': str(e)}, status=500)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 def get_document_detail(request, document_id):
-    """Get details of a specific document"""
+    """Get or delete a specific customer document"""
     try:
-        # Get email from query params or authenticated user
+        if request.method == 'DELETE':
+            document = CustomerDocument.objects.get(id=document_id)
+            document.file.delete(save=False)
+            document.delete()
+            return Response({'message': 'Document deleted successfully'}, status=200)
+
         email = request.query_params.get('email')
         if not email:
             if request.user.is_authenticated:
                 email = request.user.email
             else:
                 return Response({'error': 'Email parameter required or user must be authenticated'}, status=400)
-        
+
         customer = Customer.objects.get(email=email)
-        
         document = CustomerDocument.objects.select_related(
             'booking', 'uploaded_by'
         ).get(id=document_id, customer=customer)
-        
+
         serializer = CustomerDocumentSerializer(document, context={'request': request})
         return Response(serializer.data)
     except CustomerDocument.DoesNotExist:
         return Response({'error': 'Document not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
+class AdminContactMessageViewSet(viewsets.ModelViewSet):
+    queryset = ContactMessage.objects.all()
+    serializer_class = ContactMessageSerializer
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
+
+
+class AdminDiscountCodeViewSet(viewsets.ModelViewSet):
+    queryset = DiscountCode.objects.all()
+    serializer_class = DiscountCodeSerializer
 
 
 @api_view(['POST'])

@@ -28,6 +28,8 @@ router.register(r'admin/categories', AdminCategoryViewSet, basename='admin-categ
 router.register(r'admin/items', AdminTravelItemViewSet, basename='admin-item')
 router.register(r'admin/users', AdminUserViewSet, basename='admin-user')
 router.register(r'admin/customers', AdminCustomerViewSet, basename='admin-customer')
+router.register(r'admin/contact-messages', AdminContactMessageViewSet, basename='admin-contact-message')
+router.register(r'admin/discount-codes', AdminDiscountCodeViewSet, basename='admin-discount-code')
 
 urlpatterns = [
     path('', include(router.urls)),

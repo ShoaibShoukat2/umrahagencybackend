@@ -325,7 +325,7 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = '__all__'
-        read_only_fields = ['created_at', 'is_read']
+        read_only_fields = ['created_at']
 
 
 class DiscountCodeSerializer(serializers.ModelSerializer):
