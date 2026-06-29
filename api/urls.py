@@ -9,7 +9,8 @@ from .chatbot import chat_with_ai
 from .live_audio import start_live_audio, join_live_audio, end_live_audio, get_active_sessions
 from .qr_views import (
     generate_id_tag, generate_bag_tag, get_rooming_list, 
-    print_rooming_list, scan_qr_code, bulk_generate_tags
+    print_rooming_list, scan_qr_code, bulk_generate_tags,
+    generate_id_tag_passenger, generate_bag_tag_passenger, scan_qr_code_passenger,
 )
 
 router = DefaultRouter()
@@ -77,6 +78,9 @@ urlpatterns = [
     path('live-audio/active/', get_active_sessions, name='get-active-sessions'),
     
     # QR Code and Rooming List endpoints
+    path('qr/id-tag/passenger/<int:passenger_id>/', generate_id_tag_passenger, name='generate-id-tag-passenger'),
+    path('qr/bag-tag/passenger/<int:passenger_id>/', generate_bag_tag_passenger, name='generate-bag-tag-passenger'),
+    path('qr/scan/<str:qr_type>/passenger/<int:passenger_id>/', scan_qr_code_passenger, name='scan-qr-passenger'),
     path('qr/id-tag/<int:customer_id>/', generate_id_tag, name='generate-id-tag'),
     path('qr/bag-tag/<int:customer_id>/', generate_bag_tag, name='generate-bag-tag'),
     path('qr/rooming-list/<int:package_id>/', get_rooming_list, name='get-rooming-list'),

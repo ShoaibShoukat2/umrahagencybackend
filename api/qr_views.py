@@ -9,12 +9,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from .models import Package, Booking, Customer
+from .models import Package, Booking, Customer, Passenger
 from .qr_code_generator import (
     create_id_tag, 
     create_bag_tag, 
     generate_rooming_list_data,
-    generate_qr_code_data
+    generate_qr_code_data,
+    build_passenger_tag_data,
+    build_package_tag_data,
 )
 import json
 from reportlab.pdfgen import canvas
@@ -24,6 +26,73 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from io import BytesIO
+
+
+def _get_passenger_with_context(passenger_id):
+    passenger = get_object_or_404(
+        Passenger.objects.select_related(
+            'booking_room__booking__package',
+            'booking_room__booking__customer',
+        ),
+        id=passenger_id,
+    )
+    room = passenger.booking_room
+    booking = room.booking
+    package = booking.package
+    if not package:
+        raise ValueError('Passenger booking has no package')
+    return passenger, room, booking, package
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def generate_id_tag_passenger(request, passenger_id):
+    """Generate ID tag for a specific passenger."""
+    try:
+        passenger, room, booking, package = _get_passenger_with_context(passenger_id)
+        customer_data = build_passenger_tag_data(passenger, booking, room, package)
+        package_data = build_package_tag_data(package)
+        id_tag_base64 = create_id_tag(customer_data, package_data)
+        return Response({
+            'success': True,
+            'passenger_id': passenger.id,
+            'customer_id': booking.customer_id,
+            'customer_name': passenger.full_name,
+            'booking_number': booking.booking_number,
+            'package_name': package.name,
+            'id_tag_image': f"data:image/png;base64,{id_tag_base64}",
+            'qr_data': generate_qr_code_data('id_tag', customer_data, package_data),
+        }, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def generate_bag_tag_passenger(request, passenger_id):
+    """Generate bag tag for a specific passenger."""
+    try:
+        passenger, room, booking, package = _get_passenger_with_context(passenger_id)
+        customer_data = build_passenger_tag_data(passenger, booking, room, package)
+        package_data = build_package_tag_data(package)
+        bag_tag_base64 = create_bag_tag(customer_data, package_data)
+        return Response({
+            'success': True,
+            'passenger_id': passenger.id,
+            'customer_id': booking.customer_id,
+            'customer_name': passenger.full_name,
+            'booking_number': booking.booking_number,
+            'room_number': customer_data['room_number'],
+            'hotel_name': customer_data['hotel_name'],
+            'bag_tag_image': f"data:image/png;base64,{bag_tag_base64}",
+            'qr_data': generate_qr_code_data('bag_tag', customer_data, package_data),
+        }, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -261,6 +330,53 @@ def print_rooming_list(request, package_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def scan_qr_code_passenger(request, qr_type, passenger_id):
+    """Handle QR scan for a specific passenger."""
+    try:
+        passenger, room, booking, package = _get_passenger_with_context(passenger_id)
+        customer = booking.customer
+        scan_data = {
+            'scan_type': qr_type,
+            'passenger': {
+                'id': passenger.id,
+                'name': passenger.full_name,
+                'passenger_type': passenger.passenger_type,
+                'gender': passenger.gender,
+                'phone': passenger.phone or booking.contact_phone,
+            },
+            'customer': {
+                'id': customer.id,
+                'name': customer.user.first_name if customer.user else customer.email,
+                'email': customer.email,
+                'phone': customer.phone,
+            },
+            'booking': {
+                'booking_number': booking.booking_number,
+                'status': booking.status,
+                'package_name': package.name,
+                'travel_date': package.travel_date,
+            },
+            'room': {
+                'room_number': room.room_number if room else None,
+                'hotel_name': getattr(package, 'hotel_name', '') or 'TBA',
+                'room_type': room.sharing_type if room else None,
+            },
+            'emergency_contact': {
+                'name': booking.emergency_name,
+                'phone': booking.emergency_phone,
+                'relationship': booking.emergency_relationship,
+            },
+            'scanned_at': request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR')),
+        }
+        return Response({'success': True, 'data': scan_data}, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def scan_qr_code(request, qr_type, customer_id):
     """
     Handle QR code scanning - returns customer info
@@ -339,59 +455,39 @@ def bulk_generate_tags(request, package_id):
             )
         
         package = get_object_or_404(Package, id=package_id)
-        bookings = Booking.objects.filter(package=package).select_related('customer')
-        
+        bookings = Booking.objects.filter(package=package).select_related(
+            'customer', 'package'
+        ).prefetch_related('rooms__passengers')
+
         results = []
-        
+        package_data = build_package_tag_data(package)
+
         for booking in bookings:
-            customer = booking.customer
-            
-            # Prepare customer data
-            customer_data = {
-                'id': customer.id,
-                'name': customer.user.first_name if customer.user else customer.email,
-                'booking_number': booking.booking_number,
-                'emergency_contact': f"{booking.emergency_name} - {booking.emergency_phone}",
-                'next_of_kin': f"{booking.emergency_name} ({booking.emergency_relationship})"
-            }
-            
-            # Get room info for bag tag
-            room = booking.rooms.first()
-            if room:
-                customer_data.update({
-                    'room_number': room.room_number,
-                    'hotel_name': getattr(package, 'hotel_name', '') or 'TBA'
-                })
-            
-            # Prepare package data
-            package_data = {
-                'id': package.id,
-                'name': package.name,
-                'color': getattr(package, 'color', '#2E7D32'),
-                'hotel_contact': getattr(package, 'hotel_contact', 'Contact tour leader')
-            }
-            
-            customer_result = {
-                'customer_id': customer.id,
-                'customer_name': customer_data['name'],
-                'booking_number': customer_data['booking_number']
-            }
-            
-            # Generate ID tag
-            if tag_type in ['id', 'both']:
-                id_tag_base64 = create_id_tag(customer_data, package_data)
-                customer_result['id_tag'] = f"data:image/png;base64,{id_tag_base64}"
-            
-            # Generate bag tag
-            if tag_type in ['bag', 'both']:
-                bag_tag_base64 = create_bag_tag(customer_data, package_data)
-                customer_result['bag_tag'] = f"data:image/png;base64,{bag_tag_base64}"
-            
-            results.append(customer_result)
-        
+            for room in booking.rooms.all():
+                for passenger in room.passengers.all():
+                    customer_data = build_passenger_tag_data(passenger, booking, room, package)
+                    passenger_result = {
+                        'passenger_id': passenger.id,
+                        'customer_id': booking.customer_id,
+                        'customer_name': passenger.full_name,
+                        'booking_number': booking.booking_number,
+                        'room_number': customer_data.get('room_number', 'TBA'),
+                    }
+
+                    if tag_type in ['id', 'both']:
+                        id_tag_base64 = create_id_tag(customer_data, package_data)
+                        passenger_result['id_tag'] = f"data:image/png;base64,{id_tag_base64}"
+
+                    if tag_type in ['bag', 'both']:
+                        bag_tag_base64 = create_bag_tag(customer_data, package_data)
+                        passenger_result['bag_tag'] = f"data:image/png;base64,{bag_tag_base64}"
+
+                    results.append(passenger_result)
+
         return Response({
             'success': True,
             'package_name': package.name,
+            'total_passengers': len(results),
             'total_customers': len(results),
             'tag_type': tag_type,
             'tags': results

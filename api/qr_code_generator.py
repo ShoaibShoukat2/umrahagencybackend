@@ -19,19 +19,20 @@ def generate_qr_code_data(data_type, customer_data, package_data=None):
     
     Args:
         data_type: 'id_tag' or 'bag_tag'
-        customer_data: Customer information
+        customer_data: Passenger/customer information (passenger_id preferred)
         package_data: Package information
     
     Returns:
         dict: QR code data
     """
     base_url = getattr(settings, 'FRONTEND_URL', 'https://tmfouzy.sg')
-    
+    entity_id = customer_data.get('passenger_id') or customer_data.get('id')
+
     if data_type == 'id_tag':
-        # ID Tag QR Code - Contains customer info for attendance tracking
         qr_data = {
             'type': 'id_tag',
-            'customer_id': customer_data.get('id'),
+            'passenger_id': customer_data.get('passenger_id'),
+            'customer_id': customer_data.get('customer_id') or customer_data.get('id'),
             'name': customer_data.get('name'),
             'booking_number': customer_data.get('booking_number'),
             'package_id': package_data.get('id') if package_data else None,
@@ -39,26 +40,51 @@ def generate_qr_code_data(data_type, customer_data, package_data=None):
             'emergency_contact': customer_data.get('emergency_contact'),
             'next_of_kin': customer_data.get('next_of_kin'),
             'hotel_contact': package_data.get('hotel_contact') if package_data else None,
-            'scan_url': f"{base_url}/scan/id/{customer_data.get('id')}"
+            'scan_url': f"{base_url}/scan/id/{entity_id}",
         }
-    
+
     elif data_type == 'bag_tag':
-        # Bag Tag QR Code - Contains room number for staff reference
         qr_data = {
             'type': 'bag_tag',
-            'customer_id': customer_data.get('id'),
+            'passenger_id': customer_data.get('passenger_id'),
+            'customer_id': customer_data.get('customer_id') or customer_data.get('id'),
             'name': customer_data.get('name'),
             'booking_number': customer_data.get('booking_number'),
             'room_number': customer_data.get('room_number'),
             'hotel_name': customer_data.get('hotel_name'),
             'package_id': package_data.get('id') if package_data else None,
-            'scan_url': f"{base_url}/scan/bag/{customer_data.get('id')}"
+            'scan_url': f"{base_url}/scan/bag/{entity_id}",
         }
-    
+
     else:
         raise ValueError(f"Invalid data_type: {data_type}")
-    
+
     return qr_data
+
+
+def build_package_tag_data(package):
+    return {
+        'id': package.id,
+        'name': package.name,
+        'color': getattr(package, 'color', '#2E7D32'),
+        'hotel_contact': getattr(package, 'hotel_contact', 'Contact tour leader'),
+    }
+
+
+def build_passenger_tag_data(passenger, booking, room, package):
+    """Build tag payload for a specific passenger in their assigned room."""
+    hotel_name = getattr(package, 'hotel_name', '') or 'TBA'
+    return {
+        'id': passenger.id,
+        'passenger_id': passenger.id,
+        'customer_id': booking.customer_id,
+        'name': passenger.full_name,
+        'booking_number': booking.booking_number,
+        'room_number': room.room_number if room and room.room_number else 'TBA',
+        'hotel_name': hotel_name,
+        'emergency_contact': f"{booking.emergency_name} - {booking.emergency_phone}",
+        'next_of_kin': f"{booking.emergency_name} ({booking.emergency_relationship})",
+    }
 
 
 def create_qr_code_image(data, size=(300, 300)):
@@ -263,7 +289,7 @@ def generate_rooming_list_data(package_id):
     """
     try:
         package = Package.objects.get(id=package_id)
-        bookings = Booking.objects.filter(package=package).select_related('customer')
+        bookings = Booking.objects.filter(package=package).select_related('customer', 'package')
         
         rooming_data = {
             'package': {
@@ -293,12 +319,15 @@ def generate_rooming_list_data(package_id):
 
                 for passenger in room.passengers.all():
                     customer_info = {
+                        'passenger_id': passenger.id,
+                        'customer_id': booking.customer_id,
                         'id': passenger.id,
                         'name': passenger.full_name,
                         'booking_number': booking.booking_number,
                         'passenger_type': passenger.passenger_type,
                         'gender': passenger.gender,
                         'phone': passenger.phone or booking.contact_phone,
+                        'room_number': room.room_number or 'TBA',
                         'emergency_contact': f"{booking.emergency_name} - {booking.emergency_phone}",
                         'next_of_kin': f"{booking.emergency_name} ({booking.emergency_relationship})"
                     }
