@@ -320,7 +320,7 @@ def print_rooming_list(request, package_id):
         # Return PDF response
         buffer.seek(0)
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="rooming_list_{package_id}.pdf"'
+        response['Content-Disposition'] = f'inline; filename="rooming_list_{package_id}.pdf"'
         
         return response
         
