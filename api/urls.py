@@ -33,6 +33,10 @@ router.register(r'admin/contact-messages', AdminContactMessageViewSet, basename=
 router.register(r'admin/discount-codes', AdminDiscountCodeViewSet, basename='admin-discount-code')
 
 urlpatterns = [
+    # Package Import/Export MUST be before router URLs to avoid conflict with PackageViewSet slug lookup
+    path('packages/export/', export_packages, name='export-packages'),
+    path('packages/import/', import_packages, name='import-packages'),
+
     path('', include(router.urls)),
     path('create-booking/', create_booking, name='create-booking'),
     path('create-item-order/', create_item_order, name='create-item-order'),
@@ -43,9 +47,7 @@ urlpatterns = [
     path('payments/<int:payment_id>/receipt/', get_payment_receipt, name='payment-receipt'),
     path('chat/', chat_with_ai, name='chat-ai'),
     
-    # Package Import/Export
-    path('packages/export/', export_packages, name='export-packages'),
-    path('packages/import/', import_packages, name='import-packages'),
+    # Package passengers
     path('packages/<int:package_id>/passengers/', get_package_passengers, name='package-passengers'),
     path('packages/<int:package_id>/passengers/export/', export_package_passengers, name='export-package-passengers'),
     
