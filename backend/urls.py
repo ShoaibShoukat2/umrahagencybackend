@@ -10,3 +10,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # Also serve media in production (cPanel handles static via .htaccess Alias)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

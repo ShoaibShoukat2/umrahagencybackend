@@ -16,7 +16,7 @@ class Category(models.Model):
     slug = models.SlugField(unique=True)
     category_type = models.CharField(max_length=20, choices=CATEGORY_TYPES)
     description = models.TextField(blank=True)
-    image = models.URLField(max_length=500, blank=True, null=True)  # Changed to URLField for external images
+    image = models.ImageField(upload_to='categories/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,7 +53,7 @@ class Package(models.Model):
     exclusions = models.TextField(blank=True)
     complimentary_items = models.TextField(blank=True, help_text='Free gifts/items included with package (e.g., Prayer mat, Zamzam bottle, Ihram set)')
     
-    featured_image = models.URLField(max_length=500, blank=True, null=True)  # Changed to URLField for external images
+    featured_image = models.ImageField(upload_to='packages/', blank=True, null=True)  # File upload
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
@@ -71,7 +71,7 @@ class Package(models.Model):
     hotel_name = models.CharField(max_length=300, blank=True, default='', help_text="Name of the hotel")
     hotel_star_rating = models.IntegerField(blank=True, null=True, help_text="Hotel star rating (1-5)")
     hotel_country = models.CharField(max_length=100, blank=True, default='', help_text="Country where hotel is located")
-    hotel_image = models.URLField(max_length=500, blank=True, null=True, help_text="Hotel image URL")
+    hotel_image = models.ImageField(upload_to='hotels/', blank=True, null=True, help_text="Hotel image")
     
     # Tour Leader - ForeignKey to Customer marked as tour leader
     tour_leader = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True, related_name='led_packages', help_text="Select a customer marked as tour leader")
@@ -89,7 +89,7 @@ class Package(models.Model):
 
 class PackageImage(models.Model):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='images')
-    image = models.URLField(max_length=500)  # Changed to URLField for external images
+    image = models.ImageField(upload_to='package_gallery/', max_length=500)  # File upload
     caption = models.CharField(max_length=200, blank=True)
     order = models.IntegerField(default=0)
     
@@ -123,7 +123,7 @@ class TravelItem(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    image = models.URLField(max_length=500, blank=True, null=True)  # Changed to URLField for external images
+    image = models.ImageField(upload_to='items/', blank=True, null=True)
     stock_quantity = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
