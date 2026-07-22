@@ -147,7 +147,7 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'location', 'travel_date', 'return_date', 'duration_days', 'duration_nights',
             'featured_image', 'is_featured', 'is_active', 'max_capacity', 'min_deposit_amount',
             'hotel_name', 'hotel_star_rating', 'hotel_country', 'hotel_image',
-            'complimentary_items',
+            'complimentary_items', 'itinerary', 'inclusions', 'exclusions', 'tour_leader',
         ]
         extra_kwargs = {
             'slug': {'required': False, 'allow_blank': True},
@@ -159,6 +159,10 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'hotel_image': {'required': False, 'allow_null': True},
             'featured_image': {'required': False, 'allow_null': True},
             'complimentary_items': {'required': False, 'allow_blank': True},
+            'itinerary': {'required': False},
+            'inclusions': {'required': False, 'allow_blank': True},
+            'exclusions': {'required': False, 'allow_blank': True},
+            'tour_leader': {'required': False, 'allow_null': True},
         }
 
     def validate(self, data):
@@ -173,6 +177,13 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
         # Default min_deposit_amount
         if not data.get('min_deposit_amount'):
             data['min_deposit_amount'] = 100
+        # Parse itinerary if it comes as JSON string (from FormData)
+        if 'itinerary' in data and isinstance(data['itinerary'], str):
+            import json
+            try:
+                data['itinerary'] = json.loads(data['itinerary'])
+            except Exception:
+                data['itinerary'] = []
         return data
 
 

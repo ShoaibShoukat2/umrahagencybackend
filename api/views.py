@@ -1042,15 +1042,22 @@ def export_packages(request):
     writer = csv.writer(response)
     writer.writerow(['Name', 'Slug', 'Category', 'Location', 'Travel Date', 'Return Date', 
                      'Duration Days', 'Duration Nights', 'Description', 'Short Description',
-                     'Featured Image', 'Is Featured', 'Is Active', 'Min Deposit Amount'])
+                     'Featured Image URL', 'Hotel Image URL', 'Is Featured', 'Is Active', 
+                     'Min Deposit Amount', 'Hotel Name', 'Hotel Country', 'Max Capacity'])
     
     packages = Package.objects.all()
     for pkg in packages:
+        # Build full URLs for image fields
+        featured_img_url = request.build_absolute_uri(pkg.featured_image.url) if pkg.featured_image else ''
+        hotel_img_url = request.build_absolute_uri(pkg.hotel_image.url) if pkg.hotel_image else ''
+        
         writer.writerow([
             pkg.name, pkg.slug, pkg.category.name, pkg.location,
             pkg.travel_date, pkg.return_date, pkg.duration_days, pkg.duration_nights,
-            pkg.description, pkg.short_description, pkg.featured_image,
-            pkg.is_featured, pkg.is_active, pkg.min_deposit_amount
+            pkg.description, pkg.short_description, 
+            featured_img_url, hotel_img_url,
+            pkg.is_featured, pkg.is_active, pkg.min_deposit_amount,
+            pkg.hotel_name, pkg.hotel_country, pkg.max_capacity
         ])
     
     return response
@@ -1071,30 +1078,47 @@ def import_packages(request):
         reader = csv.DictReader(io_string)
         
         created_count = 0
+        skipped = []
         for row in reader:
             category = Category.objects.filter(name=row['Category']).first()
             if not category:
+                skipped.append(f"Category not found: {row.get('Category', 'unknown')}")
                 continue
-                
-            Package.objects.create(
-                name=row['Name'],
-                slug=row['Slug'],
-                category=category,
-                location=row['Location'],
-                travel_date=row['Travel Date'],
-                return_date=row['Return Date'],
-                duration_days=int(row['Duration Days']),
-                duration_nights=int(row['Duration Nights']),
-                description=row['Description'],
-                short_description=row.get('Short Description', ''),
-                featured_image=row.get('Featured Image', ''),
-                is_featured=row.get('Is Featured', 'False') == 'True',
-                is_active=row.get('Is Active', 'True') == 'True',
-                min_deposit_amount=float(row.get('Min Deposit Amount', 100))
-            )
-            created_count += 1
+
+            # Skip if slug already exists
+            slug = row.get('Slug', '').strip()
+            if slug and Package.objects.filter(slug=slug).exists():
+                skipped.append(f"Slug already exists: {slug}")
+                continue
+
+            try:
+                pkg = Package.objects.create(
+                    name=row['Name'],
+                    slug=slug or None,
+                    category=category,
+                    location=row.get('Location', ''),
+                    travel_date=row['Travel Date'],
+                    return_date=row['Return Date'],
+                    duration_days=int(row['Duration Days']),
+                    duration_nights=int(row['Duration Nights']),
+                    description=row.get('Description', ''),
+                    short_description=row.get('Short Description', ''),
+                    is_featured=row.get('Is Featured', 'False') == 'True',
+                    is_active=row.get('Is Active', 'True') == 'True',
+                    min_deposit_amount=float(row.get('Min Deposit Amount', 100)),
+                    hotel_name=row.get('Hotel Name', ''),
+                    hotel_country=row.get('Hotel Country', ''),
+                    max_capacity=int(row.get('Max Capacity', 50)),
+                )
+                created_count += 1
+            except Exception as row_err:
+                skipped.append(f"Row error ({row.get('Name', '?')}): {str(row_err)}")
+                continue
         
-        return Response({'message': f'Successfully imported {created_count} packages'})
+        msg = f'Successfully imported {created_count} packages.'
+        if skipped:
+            msg += f' Skipped {len(skipped)}: ' + '; '.join(skipped[:5])
+        return Response({'message': msg, 'created': created_count, 'skipped': skipped})
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -48,7 +48,7 @@ class Package(models.Model):
     duration_nights = models.IntegerField()
     
     location = models.CharField(max_length=200)
-    itinerary = models.TextField(blank=True)
+    itinerary = models.JSONField(blank=True, default=list, help_text='Day-by-day itinerary as JSON array: [{"day":1,"date":"","title":"","description":""}]')
     inclusions = models.TextField(blank=True)
     exclusions = models.TextField(blank=True)
     complimentary_items = models.TextField(blank=True, help_text='Free gifts/items included with package (e.g., Prayer mat, Zamzam bottle, Ihram set)')
@@ -102,6 +102,9 @@ class RoomSharingPrice(models.Model):
         ('double', 'Double Sharing (2 Adults)'),
         ('triple', 'Triple Sharing (3 Adults)'),
         ('quad', 'Quad Sharing (4 Adults)'),
+        ('child_with_bed', 'Child With Bed'),
+        ('child_no_bed', 'Child No Bed'),
+        ('infant', 'Infant'),
     ]
     
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='room_prices')
