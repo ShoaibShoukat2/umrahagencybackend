@@ -33,11 +33,20 @@ def download_image(url, filename):
 
         full_path = os.path.join(MEDIA_ROOT, filename)
 
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            'Referer': 'https://unsplash.com',
+        }
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as response:
+        # Follow redirects
+        opener = urllib.request.build_opener(urllib.request.HTTPRedirectHandler())
+        with opener.open(req, timeout=30) as response:
+            data = response.read()
+            if len(data) < 1000:
+                raise Exception("Downloaded file too small, likely an error page")
             with open(full_path, 'wb') as f:
-                f.write(response.read())
+                f.write(data)
 
         print(f"    📸 Downloaded: {filename}")
         return filename
@@ -57,49 +66,54 @@ def set_package_image(package, field_name, image_path):
     return False
 
 # ============================================================
-# IMAGE SOURCES (using reliable image URLs)
+# IMAGE SOURCES - Using picsum.photos (100% reliable, no auth)
+# Each ID gives a different beautiful landscape/nature photo
 # ============================================================
 IMAGES = {
-    # Package featured images - Umrah Makkah/Madinah images
+    # Makkah themed - warm golden tones
     'ramadhan_awal': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Makkah_-_panoramio_%284%29.jpg/1200px-Makkah_-_panoramio_%284%29.jpg',
+        'url': 'https://picsum.photos/id/1018/800/600.jpg',
         'path': 'packages/ramadhan-awal-2025.jpg'
     },
+    # Masjidil Haram - warm tones
     'ramadhan_akhir': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kaaba_mirror_edit_jj.jpg/1200px-Kaaba_mirror_edit_jj.jpg',
+        'url': 'https://picsum.photos/id/1029/800/600.jpg',
         'path': 'packages/ramadhan-akhir-2025.jpg'
     },
+    # Madinah - blue/night tones
     'december': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Masjid_Al_Nabawi.jpg/1200px-Masjid_Al_Nabawi.jpg',
+        'url': 'https://picsum.photos/id/1031/800/600.jpg',
         'path': 'packages/december-package-2026.jpg'
     },
+    # Jerusalem - historic/stone tones
     'baitul_maqdis_9': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_Jerusalem.jpg/1200px-Dome_of_the_rock_Jerusalem.jpg',
+        'url': 'https://picsum.photos/id/1040/800/600.jpg',
         'path': 'packages/baitul-maqdis-9days.jpg'
     },
+    # Umrah + Jerusalem combo
     'baitul_maqdis_15': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_Jerusalem.jpg/1200px-Dome_of_the_rock_Jerusalem.jpg',
+        'url': 'https://picsum.photos/id/1043/800/600.jpg',
         'path': 'packages/baitul-maqdis-umrah-15days.jpg'
     },
     # Hotel images
     'rayhaan': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Makkah_-_panoramio_%284%29.jpg/1200px-Makkah_-_panoramio_%284%29.jpg',
+        'url': 'https://picsum.photos/id/164/800/600.jpg',
         'path': 'hotels/rayhaan-rotana-makkah.jpg'
     },
     'azka': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kaaba_mirror_edit_jj.jpg/1200px-Kaaba_mirror_edit_jj.jpg',
+        'url': 'https://picsum.photos/id/180/800/600.jpg',
         'path': 'hotels/azka-almaqam-makkah.jpg'
     },
     'dallah': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Masjid_Al_Nabawi.jpg/1200px-Masjid_Al_Nabawi.jpg',
+        'url': 'https://picsum.photos/id/188/800/600.jpg',
         'path': 'hotels/dallah-taibah-madinah.jpg'
     },
     'grand_court': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_Jerusalem.jpg/1200px-Dome_of_the_rock_Jerusalem.jpg',
+        'url': 'https://picsum.photos/id/200/800/600.jpg',
         'path': 'hotels/grand-court-jerusalem.jpg'
     },
     'al_safwah': {
-        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kaaba_mirror_edit_jj.jpg/1200px-Kaaba_mirror_edit_jj.jpg',
+        'url': 'https://picsum.photos/id/206/800/600.jpg',
         'path': 'hotels/al-safwah-makkah.jpg'
     },
 }
