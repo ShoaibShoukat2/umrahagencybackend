@@ -192,6 +192,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# Expose headers so frontend can read them
+CORS_EXPOSE_HEADERS = [
+    'Content-Disposition',
+    'Content-Type',
+]
+
 # REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

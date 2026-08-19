@@ -1035,9 +1035,16 @@ def export_packages(request):
     """Export all packages to CSV"""
     import csv
     from django.http import HttpResponse
+    from datetime import datetime
     
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="packages_export.csv"'
+    # Generate filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'packages_export_{timestamp}.csv'
+    
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Type'] = 'text/csv; charset=utf-8'
+    response['Access-Control-Expose-Headers'] = 'Content-Disposition'
     
     writer = csv.writer(response)
     writer.writerow(['Name', 'Slug', 'Category', 'Location', 'Travel Date', 'Return Date', 
