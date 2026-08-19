@@ -34,7 +34,7 @@ def add_packages():
             'name': 'Umrah Ramadhan - Awal Ramadhan Package',
             'slug': 'umrah-ramadhan-awal-2025',
             'category': umrah_cat,
-            'featured_image': 'packages/ramadhan-awal-2025.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'Ibadah yang lebih bermakna di bulan yang mulia - Awal Ramadhan 4-15 Feb 2025',
             'description': 'Paket Umrah Ramadhan di awal bulan suci dengan hotel premium dan full board meal.',
             'travel_date': '2025-02-04',
@@ -49,7 +49,7 @@ def add_packages():
             'hotel_name': 'Rayhaan by Rotana (Makkah), Dallah Taibah Hotel (Madinah)',
             'hotel_star_rating': 5,
             'hotel_country': 'Saudi Arabia',
-            'hotel_image': 'hotels/rayhaan-rotana-makkah.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa & Insurans',
             'exclusions': 'Shopping expenses, Personal expenses',
             'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set',
@@ -64,7 +64,7 @@ def add_packages():
             'name': 'Umrah Ramadhan - Akhir Ramadhan Package',
             'slug': 'umrah-ramadhan-akhir-2025',
             'category': umrah_cat,
-            'featured_image': 'packages/ramadhan-akhir-2025.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'Ibadah yang lebih bermakna di bulan yang mulia - Akhir Ramadhan 27 Feb - 12 Mar 2025',
             'description': 'Paket Umrah Ramadhan di akhir bulan suci dengan hotel premium Azka Al-Maqam dan Dallah Taibah.',
             'travel_date': '2025-02-27',
@@ -79,7 +79,7 @@ def add_packages():
             'hotel_name': 'Azka Al-Maqam (Makkah), Dallah Taibah Hotel (Madinah)',
             'hotel_star_rating': 5,
             'hotel_country': 'Saudi Arabia',
-            'hotel_image': 'hotels/azka-almaqam-makkah.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa & Insurans',
             'exclusions': 'Shopping expenses, Personal expenses',
             'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set',
@@ -94,7 +94,7 @@ def add_packages():
             'name': 'Umrah End Year Package - December 1-11',
             'slug': 'umrah-december-1-11-2026',
             'category': umrah_cat,
-            'featured_image': 'packages/december-package-2026.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'End of Year Umrah Package Dec 2026 - Dallah Taibah Hotel Madinah',
             'description': 'Umrah package with premium hotels: Dallah Taibah (Madinah) and Hotel Rayhaan by Rotana (Makkah)',
             'travel_date': '2026-12-01',
@@ -109,7 +109,7 @@ def add_packages():
             'hotel_name': 'Rayhaan by Rotana (Makkah), Dallah Taibah Hotel (Madinah)',
             'hotel_star_rating': 5,
             'hotel_country': 'Saudi Arabia',
-            'hotel_image': 'hotels/dallah-taibah-madinah.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Economy Round Trip, Guided Journey, Tours & Transfers, 5-Star Hotel, Full Board Meal, Visa Expenses, Departure Accessories, High Speed Train',
             'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set, 2km from Zam Zam 2 liters',
             'room_prices': [
@@ -125,7 +125,7 @@ def add_packages():
             'name': 'Umrah End Year Package - December 15-25',
             'slug': 'umrah-december-15-25-2026',
             'category': umrah_cat,
-            'featured_image': 'packages/december-package-2026.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'End of Year Umrah Package Dec 2026 - Premium Hotels',
             'description': 'Umrah package with premium hotels: Dallah Taibah (Madinah) and Hotel Rayhaan by Rotana (Makkah)',
             'travel_date': '2026-12-15',
@@ -140,7 +140,7 @@ def add_packages():
             'hotel_name': 'Rayhaan by Rotana (Makkah), Dallah Taibah Hotel (Madinah)',
             'hotel_star_rating': 5,
             'hotel_country': 'Saudi Arabia',
-            'hotel_image': 'hotels/dallah-taibah-madinah.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Economy Round Trip, Guided Journey, Tours & Transfers, 5-Star Hotel, Full Board Meal, Visa Expenses, Departure Accessories, High Speed Train',
             'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set, 2km from Zam Zam 2 liters',
             'room_prices': [
@@ -156,7 +156,7 @@ def add_packages():
             'name': 'The Sacred Journey - Baitul Maqdis (9 Days)',
             'slug': 'baitul-maqdis-9-days-jan-2026',
             'category': ziarah_cat,
-            'featured_image': 'packages/baitul-maqdis-9days.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'Amman, Petra, Baitul Maqdis - 9 Days Sacred Journey',
             'description': 'Jelajah Bumi Anbiya - Visit Petra, Baitul Maqdis (Jerusalem), and Hebron with Ustaz TM Fauwaz as guide',
             'travel_date': '2026-01-01',
@@ -171,7 +171,7 @@ def add_packages():
             'hotel_name': 'Grand Court Hotel (Jerusalem), Regency Palace Hotel (Amman)',
             'hotel_star_rating': 5,
             'hotel_country': 'Jordan, Palestine',
-            'hotel_image': 'hotels/grand-court-jerusalem.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Economy Round Trip, Guided Journey, Tours & Transfers, 5-Star Hotel, Full Board Meal, Visa Expenses, Departure Accessories',
             'complimentary_items': 'Travel accessories',
             'itinerary': [
@@ -192,7 +192,7 @@ def add_packages():
             'name': 'The Sacred Journey - Umrah + Baitul Maqdis (15 Days)',
             'slug': 'umrah-baitul-maqdis-15-days-2025',
             'category': ziarah_cat,
-            'featured_image': 'packages/baitul-maqdis-umrah-15days.jpg',
+            'featured_image': '',  # Leave empty for now
             'short_description': 'Amman, Petra, Baitul Maqdis + Umrah - 15 Days Complete Journey',
             'description': 'Complete package combining Baitul Maqdis tour with Umrah, guided by Ustaz TM Fauwaz',
             'travel_date': '2025-12-26',
@@ -207,7 +207,7 @@ def add_packages():
             'hotel_name': 'Grand Court Hotel (Jerusalem), Al Safwah Hotel Tower 3 (Makkah), Dallah Taibah Hotel (Madinah)',
             'hotel_star_rating': 5,
             'hotel_country': 'Jordan, Palestine, Saudi Arabia',
-            'hotel_image': 'hotels/al-safwah-makkah.jpg',
+            'hotel_image': '',  # Leave empty for now
             'inclusions': 'Economy Round Trip, Guided Journey, Tours & Transfers, 5-Star Hotel, Full Board Meal, Visa Expenses, Departure Accessories, High Speed Train',
             'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set',
             'itinerary': [
