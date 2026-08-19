@@ -66,54 +66,58 @@ def set_package_image(package, field_name, image_path):
     return False
 
 # ============================================================
-# IMAGE SOURCES - Using picsum.photos (100% reliable, no auth)
-# Each ID gives a different beautiful landscape/nature photo
+# IMAGE SOURCES - Relevant Islamic/Travel images from Wikimedia
+# All images are public domain or CC licensed
 # ============================================================
 IMAGES = {
-    # Makkah themed - warm golden tones
+    # Makkah - Masjidil Haram / Kaaba (Ramadhan Awal)
     'ramadhan_awal': {
-        'url': 'https://picsum.photos/id/1018/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kaaba_mirror_edit_jj.jpg/800px-Kaaba_mirror_edit_jj.jpg',
         'path': 'packages/ramadhan-awal-2025.jpg'
     },
-    # Masjidil Haram - warm tones
+    # Masjidil Haram aerial view (Ramadhan Akhir)
     'ramadhan_akhir': {
-        'url': 'https://picsum.photos/id/1029/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/MasjidAlHaram.jpg/800px-MasjidAlHaram.jpg',
         'path': 'packages/ramadhan-akhir-2025.jpg'
     },
-    # Madinah - blue/night tones
+    # Masjid Nabawi - Madinah (December package)
     'december': {
-        'url': 'https://picsum.photos/id/1031/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Masjid_Al_Nabawi.jpg/800px-Masjid_Al_Nabawi.jpg',
         'path': 'packages/december-package-2026.jpg'
     },
-    # Jerusalem - historic/stone tones
+    # Dome of the Rock - Jerusalem (Baitul Maqdis 9 days)
     'baitul_maqdis_9': {
-        'url': 'https://picsum.photos/id/1040/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_Jerusalem.jpg/800px-Dome_of_the_rock_Jerusalem.jpg',
         'path': 'packages/baitul-maqdis-9days.jpg'
     },
-    # Umrah + Jerusalem combo
+    # Al-Aqsa Mosque (Baitul Maqdis 15 days)
     'baitul_maqdis_15': {
-        'url': 'https://picsum.photos/id/1043/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Al-Aqsa_Mosque%2C_2013.jpg/800px-Al-Aqsa_Mosque%2C_2013.jpg',
         'path': 'packages/baitul-maqdis-umrah-15days.jpg'
     },
-    # Hotel images
+    # Hotel images - Makkah skyline / Clock Tower
     'rayhaan': {
-        'url': 'https://picsum.photos/id/164/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Makkah_Towers.jpg/800px-Makkah_Towers.jpg',
         'path': 'hotels/rayhaan-rotana-makkah.jpg'
     },
+    # Makkah Kaaba close up (Azka hotel)
     'azka': {
-        'url': 'https://picsum.photos/id/180/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kaaba_mirror_edit_jj.jpg/800px-Kaaba_mirror_edit_jj.jpg',
         'path': 'hotels/azka-almaqam-makkah.jpg'
     },
+    # Madinah / Masjid Nabawi (Dallah Taibah hotel)
     'dallah': {
-        'url': 'https://picsum.photos/id/188/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Masjid_Al_Nabawi.jpg/800px-Masjid_Al_Nabawi.jpg',
         'path': 'hotels/dallah-taibah-madinah.jpg'
     },
+    # Dome of the Rock (Grand Court Jerusalem)
     'grand_court': {
-        'url': 'https://picsum.photos/id/200/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_Jerusalem.jpg/800px-Dome_of_the_rock_Jerusalem.jpg',
         'path': 'hotels/grand-court-jerusalem.jpg'
     },
+    # Al-Aqsa (Al Safwah hotel - Makkah combo)
     'al_safwah': {
-        'url': 'https://picsum.photos/id/206/800/600.jpg',
+        'url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/MasjidAlHaram.jpg/800px-MasjidAlHaram.jpg',
         'path': 'hotels/al-safwah-makkah.jpg'
     },
 }
