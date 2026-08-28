@@ -328,6 +328,47 @@ class ItemOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BlogPostSerializer(serializers.ModelSerializer):
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    tags_list = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogPost
+        fields = [
+            'id', 'title', 'slug', 'category', 'category_display',
+            'excerpt', 'featured_image', 'author_name', 'is_published',
+            'is_featured', 'views_count', 'read_time_minutes', 'tags',
+            'tags_list', 'meta_description', 'published_at', 'created_at',
+        ]
+
+    def get_tags_list(self, obj):
+        if obj.tags:
+            return [t.strip() for t in obj.tags.split(',') if t.strip()]
+        return []
+
+
+class BlogPostDetailSerializer(BlogPostSerializer):
+    class Meta(BlogPostSerializer.Meta):
+        fields = BlogPostSerializer.Meta.fields + ['content', 'updated_at']
+
+
+class AdminBlogPostSerializer(serializers.ModelSerializer):
+    """Full serializer for admin CRUD — includes all fields"""
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = BlogPost
+        fields = '__all__'
+        read_only_fields = ['views_count', 'read_time_minutes', 'published_at', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        import re
+        if not data.get('slug'):
+            name = data.get('title', '')
+            data['slug'] = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+        return data
+
+
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage

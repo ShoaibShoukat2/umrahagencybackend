@@ -1366,3 +1366,101 @@ def upload_customer_document(request):
         serializer.save(uploaded_by=request.user)
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
+
+
+# ─── Blog Views ───────────────────────────────────────────────────────────────
+
+class BlogPostViewSet(viewsets.ReadOnlyModelViewSet):
+    """Public read-only blog endpoints. Returns published posts only."""
+    serializer_class = BlogPostSerializer
+    lookup_field = 'slug'
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'excerpt', 'content', 'tags']
+    ordering_fields = ['published_at', 'views_count']
+    ordering = ['-published_at']
+
+    def get_queryset(self):
+        qs = BlogPost.objects.filter(is_published=True)
+        category = self.request.query_params.get('category')
+        if category:
+            qs = qs.filter(category=category)
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return BlogPostDetailSerializer
+        return BlogPostSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        """Increment view count on single post fetch."""
+        instance = self.get_object()
+        BlogPost.objects.filter(pk=instance.pk).update(views_count=instance.views_count + 1)
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def featured(self, request):
+        """Return featured posts for landing page (max 3)."""
+        posts = BlogPost.objects.filter(is_published=True, is_featured=True).order_by('-published_at')[:3]
+        serializer = BlogPostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def latest(self, request):
+        """Return latest N published posts (default 6)."""
+        limit = int(request.query_params.get('limit', 6))
+        posts = BlogPost.objects.filter(is_published=True).order_by('-published_at')[:limit]
+        serializer = BlogPostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def categories(self, request):
+        """Return available blog categories with post counts."""
+        from django.db.models import Count
+        cats = (
+            BlogPost.objects
+            .filter(is_published=True)
+            .values('category')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        result = [
+            {'value': c['category'], 'label': dict(BlogPost.CATEGORY_CHOICES).get(c['category'], c['category']), 'count': c['count']}
+            for c in cats
+        ]
+        return Response(result)
+
+
+class AdminBlogPostViewSet(viewsets.ModelViewSet):
+    """Admin full CRUD for blog posts."""
+    queryset = BlogPost.objects.all().order_by('-created_at')
+    serializer_class = AdminBlogPostSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'excerpt', 'content', 'tags']
+    ordering_fields = ['created_at', 'published_at', 'views_count']
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def toggle_publish(self, request, pk=None):
+        """Toggle published state of a post."""
+        post = self.get_object()
+        post.is_published = not post.is_published
+        if post.is_published and not post.published_at:
+            from django.utils import timezone
+            post.published_at = timezone.now()
+        post.save()
+        return Response({'is_published': post.is_published, 'published_at': post.published_at})
+
+    @action(detail=True, methods=['post'])
+    def toggle_featured(self, request, pk=None):
+        """Toggle featured state of a post."""
+        post = self.get_object()
+        post.is_featured = not post.is_featured
+        post.save()
+        return Response({'is_featured': post.is_featured})

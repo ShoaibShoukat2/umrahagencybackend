@@ -392,6 +392,56 @@ class ItemOrderDetailAdmin(admin.ModelAdmin):
     list_filter = ['order__status']
     search_fields = ['order__order_number', 'item__name']
 
+@admin.register(BlogPost)
+class BlogPostAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'author_name', 'is_published', 'is_featured', 'views_count', 'published_at', 'created_at']
+    list_filter = ['is_published', 'is_featured', 'category', 'created_at']
+    search_fields = ['title', 'excerpt', 'content', 'tags']
+    prepopulated_fields = {'slug': ('title',)}
+    list_editable = ['is_published', 'is_featured']
+    readonly_fields = ['views_count', 'read_time_minutes', 'published_at', 'created_at', 'updated_at']
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Post Information', {
+            'fields': ('title', 'slug', 'category', 'author_name')
+        }),
+        ('Content', {
+            'fields': ('excerpt', 'content', 'featured_image')
+        }),
+        ('SEO', {
+            'fields': ('tags', 'meta_description'),
+        }),
+        ('Publishing', {
+            'fields': ('is_published', 'is_featured', 'published_at', 'read_time_minutes', 'views_count')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    actions = ['publish_posts', 'unpublish_posts', 'mark_featured', 'unmark_featured']
+
+    def publish_posts(self, request, queryset):
+        from django.utils import timezone
+        queryset.filter(published_at__isnull=True).update(published_at=timezone.now())
+        queryset.update(is_published=True)
+    publish_posts.short_description = 'Publish selected posts'
+
+    def unpublish_posts(self, request, queryset):
+        queryset.update(is_published=False)
+    unpublish_posts.short_description = 'Unpublish selected posts'
+
+    def mark_featured(self, request, queryset):
+        queryset.update(is_featured=True)
+    mark_featured.short_description = 'Mark as featured'
+
+    def unmark_featured(self, request, queryset):
+        queryset.update(is_featured=False)
+    unmark_featured.short_description = 'Remove from featured'
+
+
 # Customize Admin Site
 admin.site.site_header = "Umrah Agency Admin"
 admin.site.site_title = "Umrah Agency Admin Portal"

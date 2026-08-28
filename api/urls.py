@@ -32,6 +32,10 @@ router.register(r'admin/customers', AdminCustomerViewSet, basename='admin-custom
 router.register(r'admin/contact-messages', AdminContactMessageViewSet, basename='admin-contact-message')
 router.register(r'admin/discount-codes', AdminDiscountCodeViewSet, basename='admin-discount-code')
 
+# Blog routes
+router.register(r'blog', BlogPostViewSet, basename='blog')
+router.register(r'admin/blog', AdminBlogPostViewSet, basename='admin-blog')
+
 urlpatterns = [
     # Package Import/Export MUST be before router URLs to avoid conflict with PackageViewSet slug lookup
     path('packages/export/', export_packages, name='export-packages'),
