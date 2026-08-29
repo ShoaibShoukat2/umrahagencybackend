@@ -39,7 +39,7 @@ def get_or_create_umrah_category():
 
 def make_inclusions():
     return """- Return Air Ticket
-- Saudi Umrah Visa & Travel Insurance
+- Saudi Umrah Visa
 - 5-Star Hotel Accommodation
 - Full Board Meals (Breakfast, Lunch & Dinner)
 - 3x Guided Umrah
@@ -54,7 +54,7 @@ def make_complimentary():
 
 def make_ramadhan_inclusions():
     return """- Return Air Ticket
-- Saudi Umrah Visa & Travel Insurance
+- Saudi Umrah Visa
 - Hotel Accommodation
 - Full Board Meals — Sahur & Iftar (3 meals daily)
 - 3x Guided Umrah
@@ -172,9 +172,9 @@ comp_2026 = make_complimentary()
 
 packages_2026 = [
     # (name, travel_date, return_date, days, nights, airline, arrival, madinah_hotel, double, triple, quad, child_with_bed, child_no_bed)
-    ('Umrah 19 Sep – 30 Sep 2026 (SV)',  '2026-09-19','2026-09-30',12,11,'SV','MAD','Al Harithia (100m)',  4290,4090,3890,3690,2590),
-    ('Umrah 26 Sep – 7 Oct 2026 (QR)',   '2026-09-26','2026-10-07',12,11,'QR','MAD','Al Harithia (100m)',  4290,4090,3890,3690,2590),
-    ('Umrah 3 Oct – 14 Oct 2026 (SV)',   '2026-10-03','2026-10-14',12,11,'SV','MAD','The Venue Al Harithia (200m)', 4490,4190,3990,3790,2590),
+    ('Umrah 19 Sep – 30 Sep 2026 (SV)',  '2026-09-19','2026-09-30',12,11,'SV','MAD','Al Harithia (90m)',  4290,4090,3890,3690,2590),
+    ('Umrah 26 Sep – 7 Oct 2026 (QR)',   '2026-09-26','2026-10-07',12,11,'QR','MAD','Al Harithia (90m)',  4290,4090,3890,3690,2590),
+    ('Umrah 3 Oct – 14 Oct 2026 (SV)',   '2026-10-03','2026-10-14',12,11,'SV','MAD','The Venue Al Harithia (90m)', 4490,4190,3990,3790,2590),
     ('Umrah 24 Oct – 4 Nov 2026 (SV)',   '2026-10-24','2026-11-04',12,11,'SV','MAD','Dallah Taibah (90m)', 4690,4390,4190,3790,2590),
     ('Umrah 10 Nov – 20 Nov 2026 (SV)',  '2026-11-10','2026-11-20',11,10,'SV','MAD','Dallah Taibah (90m)', 4490,4290,4090,3690,2690),
     ('Umrah 18 Nov – 30 Nov 2026 (QR)',  '2026-11-18','2026-11-30',13,12,'QR','MAD','Dallah Taibah (90m)', 5290,4990,4690,4290,3290),
@@ -203,8 +203,8 @@ for (name, tdate, rdate, days, nights, airline, arrival, madinah_hotel,
     short = (f'{days}-day Umrah package via {airline}. '
              f'Fly to {arrival_city} first. '
              f'Makkah: Al-Marwa Rayhaan by Rotana (50m from Haram). '
-             f'Madinah: {madinah_hotel}. '
-             f'Full Board. 3x Guided Umrah. Visa & Insurance included.')
+             f'Madinah: {madinah_hotel} from Masjid Nabawi. '
+             f'Full Board. 3x Guided Umrah. Visa included. Haramain Train included.')
 
     pkg = create_package(
         cat=cat,
