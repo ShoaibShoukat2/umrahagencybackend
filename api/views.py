@@ -1486,10 +1486,10 @@ def flight_schedule(request):
     import urllib.parse
     import json as _json
 
-    api_key = os.getenv('AVIATIONSTACK_API_KEY', '')
-    if not api_key:
+    api_key = os.getenv('AVIATIONSTACK_API_KEY', '').strip()
+    if not api_key or api_key == 'your_aviationstack_api_key_here':
         return Response(
-            {'error': 'Flight API is not configured. Please contact support.'},
+            {'error': 'Flight schedule service is not configured yet. Please contact support.'},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
@@ -1509,10 +1509,38 @@ def flight_schedule(request):
     try:
         with urllib.request.urlopen(url, timeout=15) as resp:
             body = resp.read().decode('utf-8')
-            data = _json.loads(body)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode('utf-8', errors='ignore')
+        # If the response is HTML (error page), return a clean message
+        if body.strip().startswith('<'):
+            return Response(
+                {'error': f'Flight data provider returned an error (HTTP {exc.code}). Check your API key.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+    except urllib.error.URLError as exc:
+        return Response(
+            {'error': f'Could not reach flight data provider: {str(exc.reason)}'},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
     except Exception as exc:
         return Response(
-            {'error': f'Could not reach flight data provider: {str(exc)}'},
+            {'error': f'Unexpected error contacting flight provider: {str(exc)}'},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # Guard against HTML response (invalid key, plan restriction, etc.)
+    stripped = body.strip()
+    if stripped.startswith('<'):
+        return Response(
+            {'error': 'Flight data provider returned an invalid response. Please check the API key or plan.'},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    try:
+        data = _json.loads(body)
+    except _json.JSONDecodeError:
+        return Response(
+            {'error': 'Flight data provider returned unreadable data. Please try again later.'},
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
