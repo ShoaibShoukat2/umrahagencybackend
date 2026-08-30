@@ -1464,3 +1464,94 @@ class AdminBlogPostViewSet(viewsets.ModelViewSet):
         post.is_featured = not post.is_featured
         post.save()
         return Response({'is_featured': post.is_featured})
+
+
+# ─── Flight Schedule Proxy View ───────────────────────────────────────────────
+
+@api_view(['GET'])
+def flight_schedule(request):
+    """
+    Proxy for AviationStack flight schedule API.
+    Keeps the API key server-side and avoids CORS issues on the frontend.
+
+    Query params accepted (passed through to AviationStack):
+      - flight_iata   e.g. SQ321
+      - airline_iata  e.g. SQ
+      - dep_iata      departure airport IATA  e.g. SIN
+      - arr_iata      arrival airport IATA    e.g. JED
+      - flight_date   YYYY-MM-DD (optional)
+      - flight_status e.g. scheduled / active / landed / cancelled
+    """
+    import urllib.request
+    import urllib.parse
+    import json as _json
+
+    api_key = os.getenv('AVIATIONSTACK_API_KEY', '')
+    if not api_key:
+        return Response(
+            {'error': 'Flight API is not configured. Please contact support.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    allowed_params = [
+        'flight_iata', 'airline_iata', 'dep_iata', 'arr_iata',
+        'flight_date', 'flight_status', 'limit', 'offset',
+    ]
+    params = {'access_key': api_key, 'limit': request.GET.get('limit', '10')}
+    for key in allowed_params:
+        val = request.GET.get(key)
+        if val:
+            params[key] = val
+
+    qs = urllib.parse.urlencode(params)
+    url = f'http://api.aviationstack.com/v1/flights?{qs}'
+
+    try:
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            body = resp.read().decode('utf-8')
+            data = _json.loads(body)
+    except Exception as exc:
+        return Response(
+            {'error': f'Could not reach flight data provider: {str(exc)}'},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # AviationStack returns {"error": {...}} on bad key / plan limits
+    if 'error' in data:
+        err_info = data['error']
+        return Response(
+            {'error': err_info.get('info', 'Flight API error. Please try again.')},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    flights = data.get('data', [])
+    formatted = []
+    for f in flights:
+        dep = f.get('departure', {})
+        arr = f.get('arrival', {})
+        airline = f.get('airline', {})
+        flight = f.get('flight', {})
+        formatted.append({
+            'flight_number':     flight.get('iata') or flight.get('icao', '—'),
+            'airline_name':      airline.get('name', '—'),
+            'airline_iata':      airline.get('iata', ''),
+            'status':            f.get('flight_status', '—'),
+            'dep_airport':       dep.get('airport', '—'),
+            'dep_iata':          dep.get('iata', '—'),
+            'dep_scheduled':     dep.get('scheduled'),
+            'dep_estimated':     dep.get('estimated'),
+            'dep_actual':        dep.get('actual'),
+            'dep_terminal':      dep.get('terminal', '—'),
+            'dep_gate':          dep.get('gate', '—'),
+            'dep_delay':         dep.get('delay'),
+            'arr_airport':       arr.get('airport', '—'),
+            'arr_iata':          arr.get('iata', '—'),
+            'arr_scheduled':     arr.get('scheduled'),
+            'arr_estimated':     arr.get('estimated'),
+            'arr_actual':        arr.get('actual'),
+            'arr_terminal':      arr.get('terminal', '—'),
+            'arr_gate':          arr.get('gate', '—'),
+            'arr_delay':         arr.get('delay'),
+        })
+
+    return Response({'count': len(formatted), 'flights': formatted})

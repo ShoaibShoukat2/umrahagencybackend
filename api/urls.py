@@ -50,6 +50,7 @@ urlpatterns = [
     path('bookings/<int:booking_id>/invoice/', get_booking_invoice, name='booking-invoice'),
     path('payments/<int:payment_id>/receipt/', get_payment_receipt, name='payment-receipt'),
     path('chat/', chat_with_ai, name='chat-ai'),
+    path('flights/', flight_schedule, name='flight-schedule'),
     
     # Package passengers
     path('packages/<int:package_id>/passengers/', get_package_passengers, name='package-passengers'),
