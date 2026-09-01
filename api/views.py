@@ -21,6 +21,7 @@ class PackageViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['category__slug', 'duration_days']
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['travel_date', 'created_at']
+    pagination_class = None  # Return all packages — no page limit
     
     def get_queryset(self):
         queryset = Package.objects.filter(is_active=True).prefetch_related('room_prices', 'tags')
