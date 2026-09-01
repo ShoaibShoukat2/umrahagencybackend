@@ -936,6 +936,7 @@ def get_payment_receipt(request, payment_id):
 class AdminPackageViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on packages"""
     queryset = Package.objects.all()
+    pagination_class = None  # Return all packages to admin
 
     def get_permissions(self):
         return []
@@ -983,12 +984,14 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on categories"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    
+    pagination_class = None
+
 class AdminTravelItemViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on travel items"""
     queryset = TravelItem.objects.all()
     serializer_class = TravelItemSerializer
-    
+    pagination_class = None
+
 class AdminUserViewSet(viewsets.ModelViewSet):
     """Admin viewset for user management"""
     from django.contrib.auth.models import User
@@ -1012,6 +1015,7 @@ class AdminCustomerViewSet(viewsets.ModelViewSet):
     """Admin viewset for customer management including tour leader assignment"""
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    pagination_class = None
     
     @action(detail=False, methods=['get'])
     def tour_leaders(self, request):
