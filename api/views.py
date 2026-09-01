@@ -319,7 +319,7 @@ def create_booking(request):
 
 class BookingViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = BookingSerializer
-    
+    pagination_class = None  # Return all bookings to admin
     def get_queryset(self):
         qs = Booking.objects.select_related(
             'package', 'package__tour_leader', 'package__tour_leader__user', 'customer',
@@ -436,7 +436,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 class ItemOrderViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = ItemOrderSerializer
-    
+    pagination_class = None
     def get_queryset(self):
         email = self.request.query_params.get('email', None)
         if email:
@@ -1205,6 +1205,7 @@ def export_package_passengers(request, package_id):
 class PaymentViewSet(viewsets.ModelViewSet):
     """ViewSet for managing payments"""
     queryset = Payment.objects.all().order_by('-created_at')
+    pagination_class = None
     serializer_class = PaymentSerializer
     
     @action(detail=True, methods=['post'])
@@ -1354,12 +1355,14 @@ def get_document_detail(request, document_id):
 class AdminContactMessageViewSet(viewsets.ModelViewSet):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
+    pagination_class = None
     http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
 
 class AdminDiscountCodeViewSet(viewsets.ModelViewSet):
     queryset = DiscountCode.objects.all()
     serializer_class = DiscountCodeSerializer
+    pagination_class = None
 
 
 @api_view(['POST'])
@@ -1441,6 +1444,7 @@ class AdminBlogPostViewSet(viewsets.ModelViewSet):
     """Admin full CRUD for blog posts."""
     queryset = BlogPost.objects.all().order_by('-created_at')
     serializer_class = AdminBlogPostSerializer
+    pagination_class = None
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'excerpt', 'content', 'tags']
     ordering_fields = ['created_at', 'published_at', 'views_count']
