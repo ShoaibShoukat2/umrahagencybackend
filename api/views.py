@@ -96,15 +96,22 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 @api_view(['POST'])
 def create_booking(request):
     from django.db import transaction
-    
+
+    def safe_print(msg):
+        """Print safely — ignore non-ASCII characters (server stdout may be ASCII-only)."""
+        try:
+            print(msg)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            print(msg.encode('ascii', errors='replace').decode('ascii'))
+
     try:
         with transaction.atomic():
             import json
             data = request.data.copy()
-            
-            print("=== CREATE BOOKING DEBUG ===")
-            print(f"Raw data keys: {data.keys()}")
-            
+
+            safe_print("=== CREATE BOOKING DEBUG ===")
+            safe_print(f"Raw data keys: {list(data.keys())}")
+
             # Parse JSON fields if they come as strings (from FormData)
             if isinstance(data.get('rooms'), str):
                 data['rooms'] = json.loads(data['rooms'])
@@ -116,10 +123,10 @@ def create_booking(request):
                 data['passengers'] = json.loads(data['passengers'])
             if isinstance(data.get('addons'), str):
                 data['addons'] = json.loads(data['addons'])
-            
-            print(f"Rooms: {len(data.get('rooms', []))}")
-            print(f"Passengers: {len(data.get('passengers', []))}")
-            print(f"Addons: {len(data.get('addons', []))}")
+
+            safe_print(f"Rooms: {len(data.get('rooms', []))}")
+            safe_print(f"Passengers: {len(data.get('passengers', []))}")
+            safe_print(f"Addons: {len(data.get('addons', []))}")
             
             # Get or create customer
             customer_email = data['contact_info']['email']
@@ -133,15 +140,15 @@ def create_booking(request):
                 }
             )
             
-            print(f"Customer: {customer.email} (created: {created})")
-            
+            safe_print(f"Customer: {customer.email} (created: {created})")
+
             # Get package
             package = Package.objects.get(id=data['package_id'])
-            print(f"Package: {package.name}")
-            
+            safe_print(f"Package: {package.name}")
+
             # Create booking
             booking_number = f"BK{datetime.now().strftime('%Y%m%d')}{uuid.uuid4().hex[:6].upper()}"
-            
+
             booking = Booking.objects.create(
                 customer=customer,
                 package=package,
@@ -157,35 +164,35 @@ def create_booking(request):
                 emergency_relationship=data['emergency_contact']['relationship'],
                 special_requests=data.get('special_requests', '')
             )
-            
-            print(f"Booking created: {booking.booking_number}")
-            
+
+            safe_print(f"Booking created: {booking.booking_number}")
+
             total_amount = Decimal('0')
-        
+
         # Create rooms and passengers
         for room_index, room_data in enumerate(data['rooms']):
-            print(f"Processing room: {room_data}")
-            
+            safe_print(f"Processing room {room_index + 1}")
+
             room_price = RoomSharingPrice.objects.get(
                 package=package,
                 sharing_type=room_data['sharing_type']
             )
-            
-            print(f"Room price found: {room_price.price} for {room_price.sharing_type}")
-            
+
+            safe_print(f"Room price found: {room_price.price} for {room_price.sharing_type}")
+
             # Handle missing keys with defaults
             num_adults = room_data.get('num_adults', 0)
             num_children = room_data.get('num_children', 0)
             num_infants = room_data.get('num_infants', 0)
-            
+
             num_people = num_adults + num_children + num_infants
             room_subtotal = Decimal(str(room_price.price)) * num_people
-            
-            print(f"Room subtotal: {room_subtotal} ({num_people} people: {num_adults} adults, {num_children} children, {num_infants} infants)")
-            
+
+            safe_print(f"Room subtotal: {room_subtotal} ({num_people} people: {num_adults} adults, {num_children} children, {num_infants} infants)")
+
             booking_room = BookingRoom.objects.create(
                 booking=booking,
-                room_number=room_data.get('room_number', room_index + 1),  # Auto-generate if not provided
+                room_number=room_data.get('room_number', room_index + 1),
                 sharing_type=room_data['sharing_type'],
                 price_per_person=room_price.price,
                 num_adults=num_adults,
@@ -193,33 +200,28 @@ def create_booking(request):
                 num_infants=num_infants,
                 subtotal=room_subtotal
             )
-            
-            print(f"Room created: {booking_room.id}")
-            
+
+            safe_print(f"Room created: {booking_room.id}")
+
             total_amount += room_subtotal
-            
+
             # Create passengers for this room
-            # For admin walk-in bookings, all passengers go to the first room
-            # For multi-room bookings from frontend, filter by room_number
             if 'room_number' in room_data:
                 room_passengers = [p for p in data['passengers'] if p.get('room_number') == room_data['room_number']]
             else:
-                # Admin booking: assign all passengers to this room
                 room_passengers = data['passengers'] if room_index == 0 else []
-            
-            print(f"Creating {len(room_passengers)} passengers for room {room_index + 1}")
-            
+
+            safe_print(f"Creating {len(room_passengers)} passengers for room {room_index + 1}")
+
             for idx, passenger_data in enumerate(room_passengers):
-                # Find the index in the original passengers list
                 passenger_index = next((i for i, p in enumerate(data['passengers']) if p == passenger_data), None)
-                
-                # Get passport photo and photo ID from FILES
+
                 passport_photo_key = f'passenger_{passenger_index}_passport_photo'
                 photo_id_key = f'passenger_{passenger_index}_photo_id'
-                
+
                 passport_photo = request.FILES.get(passport_photo_key, None)
                 photo_id = request.FILES.get(photo_id_key, None)
-                
+
                 passenger = Passenger.objects.create(
                     booking_room=booking_room,
                     passenger_type=passenger_data.get('type', 'adult'),
@@ -233,18 +235,18 @@ def create_booking(request):
                     passport_photo=passport_photo,
                     photo_id=photo_id
                 )
-                
-                print(f"Passenger created: {passenger.full_name}")
-        
-        print(f"Total after rooms: {total_amount}")
-        
+
+                safe_print(f"Passenger created: {passenger.full_name}")
+
+        safe_print(f"Total after rooms: {total_amount}")
+
         # Add addons if any
         if 'addons' in data and data['addons']:
-            print(f"Processing {len(data['addons'])} addons")
+            safe_print(f"Processing {len(data['addons'])} addons")
             for addon_data in data['addons']:
                 addon = AddOn.objects.get(id=addon_data['addon_id'])
                 addon_subtotal = Decimal(str(addon.price)) * addon_data['quantity']
-                
+
                 BookingAddOn.objects.create(
                     booking=booking if addon_data.get('applies_to') == 'booking' else None,
                     booking_room=BookingRoom.objects.get(id=addon_data.get('room_id')) if addon_data.get('room_id') else None,
@@ -254,39 +256,38 @@ def create_booking(request):
                     price=addon.price,
                     subtotal=addon_subtotal
                 )
-                
+
                 total_amount += addon_subtotal
-                print(f"Addon added: {addon.name}, subtotal: {addon_subtotal}")
-        
-        print(f"Total after addons: {total_amount}")
-        
+                safe_print(f"Addon added: {addon.name}, subtotal: {addon_subtotal}")
+
+        safe_print(f"Total after addons: {total_amount}")
+
         # Handle discount code if provided
         discount_code_obj = None
         if data.get('discount_code'):
             try:
                 discount_code_obj = DiscountCode.objects.get(code=data['discount_code'].upper())
-                # Increment usage count
                 discount_code_obj.times_used += 1
                 discount_code_obj.save()
-                print(f"Discount code applied: {discount_code_obj.code}")
+                safe_print(f"Discount code applied: {discount_code_obj.code}")
             except DiscountCode.DoesNotExist:
-                print(f"Discount code not found: {data.get('discount_code')}")
-                pass  # Ignore if code doesn't exist
-        
+                safe_print(f"Discount code not found: {data.get('discount_code')}")
+                pass
+
         # Update booking totals
         booking.total_amount = total_amount
         booking.balance_amount = total_amount
         booking.save()
-        
-        print(f"Total amount calculated: {total_amount}")
-        
+
+        safe_print(f"Total amount calculated: {total_amount}")
+
         # Create payment
         payment_number = f"PAY{datetime.now().strftime('%Y%m%d')}{uuid.uuid4().hex[:6].upper()}"
         payment_amount = Decimal(str(data['payment_amount']))
         payment_screenshot = request.FILES.get('payment_screenshot', None)
-        
-        print(f"Creating payment: {payment_amount}")
-        
+
+        safe_print(f"Creating payment: {payment_amount}")
+
         payment = Payment.objects.create(
             booking=booking,
             customer=customer,
@@ -294,27 +295,25 @@ def create_booking(request):
             amount=payment_amount,
             payment_method=data['payment_method'],
             payment_screenshot=payment_screenshot,
-            status='pending'  # Changed from 'completed' to 'pending' - admin must approve
+            status='pending'
         )
-        
-        print(f"Payment created: {payment.payment_number}")
-        
-        # Don't update booking amounts yet - wait for admin approval
-        # booking.paid_amount = payment_amount
-        # booking.balance_amount = total_amount - payment_amount
-        booking.status = 'pending'  # Keep booking as pending until payment approved
+
+        safe_print(f"Payment created: {payment.payment_number}")
+
+        booking.status = 'pending'
         booking.save()
-        
-        print(f"Booking complete: Total={booking.total_amount}, Paid={booking.paid_amount}, Balance={booking.balance_amount}")
-        print("=== END DEBUG ===")
-        
+
+        safe_print(f"Booking complete: Total={booking.total_amount}, Paid={booking.paid_amount}, Balance={booking.balance_amount}")
+        safe_print("=== END DEBUG ===")
+
         serializer = BookingSerializer(booking)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
     except Exception as e:
         import traceback
-        print(f"ERROR in create_booking: {str(e)}")
-        print(traceback.format_exc())
+        err_msg = str(e).encode('ascii', errors='replace').decode('ascii')
+        safe_print(f"ERROR in create_booking: {err_msg}")
+        safe_print(traceback.format_exc())
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class BookingViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
