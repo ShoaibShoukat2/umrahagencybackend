@@ -184,8 +184,8 @@ def get_packages_data(umrah_cat, ziarah_cat, imgs):
                 'hotel_name': 'Rayhaan by Rotana (Makkah), Dallah Taibah Hotel (Madinah)',
                 'hotel_star_rating': 5,
                 'hotel_country': 'Saudi Arabia',
-                'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa & Insurans',
-                'exclusions': 'Shopping expenses, Personal expenses',
+                'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa',
+                'exclusions': 'Shopping expenses, Personal expenses, Travel insurance',
                 'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set',
             },
             'room_prices': [
@@ -216,8 +216,8 @@ def get_packages_data(umrah_cat, ziarah_cat, imgs):
                 'hotel_name': 'Azka Al-Maqam (Makkah), Dallah Taibah Hotel (Madinah)',
                 'hotel_star_rating': 5,
                 'hotel_country': 'Saudi Arabia',
-                'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa & Insurans',
-                'exclusions': 'Shopping expenses, Personal expenses',
+                'inclusions': 'Tiket Penerbangan, Penginapan Hotel, Makan 3 Kali Sehari (Full Board), 3x Umrah Guided, Ziarah di Makkah & Madinah, Mutawwif Berpengalaman, Visa',
+                'exclusions': 'Shopping expenses, Personal expenses, Travel insurance',
                 'complimentary_items': 'Prayer mat, Zamzam bottle, Ihram set',
             },
             'room_prices': [
