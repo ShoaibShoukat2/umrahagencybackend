@@ -148,6 +148,7 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'featured_image', 'is_featured', 'is_active', 'max_capacity', 'min_deposit_amount',
             'hotel_name', 'hotel_star_rating', 'hotel_country', 'hotel_image',
             'complimentary_items', 'itinerary', 'inclusions', 'exclusions', 'tour_leader',
+            'insurance_included', 'insurance_price_per_pax', 'insurance_provider', 'insurance_description',
         ]
         extra_kwargs = {
             'slug': {'required': False, 'allow_blank': True},
@@ -163,6 +164,10 @@ class AdminPackageWriteSerializer(serializers.ModelSerializer):
             'inclusions': {'required': False, 'allow_blank': True},
             'exclusions': {'required': False, 'allow_blank': True},
             'tour_leader': {'required': False, 'allow_null': True},
+            'insurance_included': {'required': False},
+            'insurance_price_per_pax': {'required': False, 'allow_null': True},
+            'insurance_provider': {'required': False, 'allow_blank': True},
+            'insurance_description': {'required': False, 'allow_blank': True},
         }
 
     def validate(self, data):

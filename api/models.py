@@ -73,6 +73,12 @@ class Package(models.Model):
     hotel_country = models.CharField(max_length=100, blank=True, default='', help_text="Country where hotel is located")
     hotel_image = models.ImageField(upload_to='hotels/', blank=True, null=True, help_text="Hotel image")
     
+    # Travel Insurance
+    insurance_included = models.BooleanField(default=False, help_text="Is travel insurance included in the package price?")
+    insurance_price_per_pax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Insurance cost per passenger (0 if included in package price)")
+    insurance_provider = models.CharField(max_length=200, blank=True, default='', help_text="Name of the insurance provider")
+    insurance_description = models.TextField(blank=True, default='', help_text="Details of the insurance coverage")
+
     # Tour Leader - ForeignKey to Customer marked as tour leader
     tour_leader = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True, related_name='led_packages', help_text="Select a customer marked as tour leader")
     
