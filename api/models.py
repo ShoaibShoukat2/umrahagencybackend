@@ -82,7 +82,7 @@ class Package(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['-travel_date', '-created_at']
+        ordering = ['travel_date', 'created_at']
     
     def __str__(self):
         return f"{self.name} - {self.travel_date}"

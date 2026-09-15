@@ -72,6 +72,7 @@ class PackageAdmin(admin.ModelAdmin):
     filter_horizontal = ['tags']
     list_editable = ['is_featured', 'is_active']
     date_hierarchy = 'travel_date'
+    ordering = ['travel_date', 'created_at']
     inlines = [PackageImageInline, RoomSharingPriceInline, AddOnInline]
     
     fieldsets = (

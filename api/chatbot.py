@@ -36,7 +36,7 @@ def get_database_context():
     """Get relevant data from database for AI context"""
     packages_data = []
     try:
-        packages = Package.objects.filter(is_active=True).select_related('category').prefetch_related('room_prices')[:15]
+        packages = Package.objects.filter(is_active=True).select_related('category').prefetch_related('room_prices').order_by('travel_date')[:15]
         for pkg in packages:
             min_price = 0
             room_price = pkg.room_prices.filter(available=True).order_by('price').first()

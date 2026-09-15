@@ -21,6 +21,7 @@ class PackageViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['category__slug', 'duration_days']
     search_fields = ['name', 'description', 'location']
     ordering_fields = ['travel_date', 'created_at']
+    ordering = ['travel_date']
     pagination_class = None  # Return all packages — no page limit
     
     def get_queryset(self):
@@ -67,7 +68,7 @@ class PackageViewSet(viewsets.ReadOnlyModelViewSet):
         if featured == 'true':
             queryset = queryset.filter(is_featured=True)
         
-        return queryset
+        return queryset.order_by('travel_date', 'created_at')
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -76,7 +77,7 @@ class PackageViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'])
     def featured(self, request):
-        packages = Package.objects.filter(is_active=True, is_featured=True)[:6]
+        packages = Package.objects.filter(is_active=True, is_featured=True).order_by('travel_date')[:6]
         serializer = self.get_serializer(packages, many=True)
         return Response(serializer.data)
 
@@ -934,7 +935,7 @@ def get_payment_receipt(request, payment_id):
 # Admin CRUD ViewSets
 class AdminPackageViewSet(viewsets.ModelViewSet):
     """Admin viewset for full CRUD on packages"""
-    queryset = Package.objects.all()
+    queryset = Package.objects.all().order_by('travel_date', 'created_at')
     pagination_class = None  # Return all packages to admin
 
     def get_permissions(self):
