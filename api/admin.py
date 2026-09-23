@@ -588,3 +588,10 @@ class CustomerDocumentAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('customer', 'booking', 'uploaded_by')
+
+
+@admin.register(PageContent)
+class PageContentAdmin(admin.ModelAdmin):
+    list_display = ['title', 'slug', 'updated_at']
+    readonly_fields = ['updated_at']
+    search_fields = ['title', 'slug']

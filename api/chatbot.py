@@ -67,7 +67,7 @@ def get_database_context():
             'Visa assistance',
             'Travel insurance',
         ],
-        'payment_methods': ['PayNow', 'Credit Card', 'Bank Transfer', 'PayPal'],
+        'payment_methods': ['PayNow'],
         'room_types': ['Single', 'Double Sharing', 'Triple Sharing', 'Quad Sharing'],
     }
 
@@ -247,7 +247,7 @@ def get_fallback_response(message, db_context=None):
 
     if any(word in message_lower for word in ['payment', 'pay', 'paynow', 'deposit']):
         return (
-            "We accept PayNow, Credit Card, Bank Transfer, and PayPal. "
+            "We accept PayNow. "
             "A minimum deposit is required to confirm your booking; the balance can be paid later.\n\n"
             f"Questions about payment?\n{contact_block}"
         )

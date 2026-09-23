@@ -1592,3 +1592,71 @@ def flight_schedule(request):
         })
 
     return Response({'count': len(formatted), 'flights': formatted})
+
+
+# ─── Editable page content (Home, About) ──────────────────────────────────────
+
+@api_view(['GET'])
+def public_page_content(request, slug):
+    """Public copy for a website page. Missing fields fall back to the built-in text."""
+    page = _get_or_create_page(slug)
+    if page is None:
+        return Response({'error': 'Page not found'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(_page_payload(page))
+
+
+@api_view(['GET', 'PUT'])
+def admin_page_content(request, slug):
+    """Read or replace the saved copy for a website page."""
+    page = _get_or_create_page(slug)
+    if page is None:
+        return Response({'error': 'Page not found'}, status=status.HTTP_404_NOT_FOUND)
+    if request.method == 'PUT':
+        content = request.data.get('content')
+        if not isinstance(content, dict):
+            return Response({'error': 'Content must be an object'}, status=status.HTTP_400_BAD_REQUEST)
+        page.content = content
+        title = request.data.get('title')
+        if isinstance(title, str) and title.strip():
+            page.title = title.strip()
+        page.save()
+    return Response(_page_payload(page))
+
+
+@api_view(['POST'])
+def upload_page_image(request):
+    """Store an image used by Home or About page content and return its URL."""
+    import os
+    from django.core.files.storage import default_storage
+
+    upload = request.FILES.get('image')
+    if not upload:
+        return Response({'error': 'Please choose an image'}, status=status.HTTP_400_BAD_REQUEST)
+    ext = os.path.splitext(upload.name)[1].lower()
+    if ext not in {'.jpg', '.jpeg', '.png', '.webp', '.gif'}:
+        return Response({'error': 'Use a JPG, PNG, WEBP, or GIF image'}, status=status.HTTP_400_BAD_REQUEST)
+    if upload.size > 5 * 1024 * 1024:
+        return Response({'error': 'Image must be under 5 MB'}, status=status.HTTP_400_BAD_REQUEST)
+    stored = default_storage.save(f'page-content/{uuid.uuid4().hex}{ext}', upload)
+    return Response({'url': request.build_absolute_uri(default_storage.url(stored))})
+
+
+def _get_or_create_page(slug):
+    from .page_defaults import PAGE_DEFAULTS, PAGE_TITLES
+    if slug not in PAGE_DEFAULTS:
+        return None
+    page, _created = PageContent.objects.get_or_create(
+        slug=slug,
+        defaults={'title': PAGE_TITLES[slug], 'content': PAGE_DEFAULTS[slug]},
+    )
+    return page
+
+
+def _page_payload(page):
+    from .page_defaults import PAGE_DEFAULTS, merge_page_content
+    return {
+        'slug': page.slug,
+        'title': page.title,
+        'content': merge_page_content(PAGE_DEFAULTS[page.slug], page.content or {}),
+        'updated_at': page.updated_at,
+    }

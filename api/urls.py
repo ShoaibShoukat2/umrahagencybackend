@@ -45,6 +45,9 @@ urlpatterns = [
     path('create-booking/', create_booking, name='create-booking'),
     path('create-item-order/', create_item_order, name='create-item-order'),
     path('contact/', submit_contact_message, name='submit-contact'),
+    path('pages/<slug:slug>/', public_page_content, name='public-page-content'),
+    path('admin/pages/upload-image/', upload_page_image, name='upload-page-image'),
+    path('admin/pages/<slug:slug>/', admin_page_content, name='admin-page-content'),
 
     path('validate-discount/', validate_discount_code, name='validate-discount'),
     path('bookings/<int:booking_id>/invoice/', get_booking_invoice, name='booking-invoice'),

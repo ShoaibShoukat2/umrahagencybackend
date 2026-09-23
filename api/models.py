@@ -654,3 +654,18 @@ class LiveAudioSession(models.Model):
     def is_active(self):
         """Check if session is currently active"""
         return self.status == 'active'
+
+
+class PageContent(models.Model):
+    """Editable copy for public pages such as Home and About Us."""
+    slug = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=120)
+    content = models.JSONField(default=dict, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Page content'
+        verbose_name_plural = 'Page content'
+
+    def __str__(self):
+        return self.title or self.slug
