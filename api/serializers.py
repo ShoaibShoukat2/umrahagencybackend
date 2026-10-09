@@ -419,13 +419,14 @@ class DuaCategorySerializer(serializers.ModelSerializer):
 class CustomerDocumentSerializer(serializers.ModelSerializer):
     document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
     uploaded_by_name = serializers.SerializerMethodField()
+    customer_email = serializers.EmailField(source='customer.email', read_only=True)
     file_url = serializers.SerializerMethodField()
     file_size_mb = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomerDocument
         fields = [
-            'id', 'customer', 'booking', 'document_type', 'document_type_display',
+            'id', 'customer', 'customer_email', 'booking', 'document_type', 'document_type_display',
             'title', 'description', 'file', 'file_url', 'file_size', 'file_size_mb',
             'uploaded_by', 'uploaded_by_name', 'is_important', 'expiry_date',
             'created_at', 'updated_at'
@@ -435,7 +436,7 @@ class CustomerDocumentSerializer(serializers.ModelSerializer):
     def get_uploaded_by_name(self, obj):
         if obj.uploaded_by:
             return obj.uploaded_by.get_full_name() or obj.uploaded_by.username
-        return 'System'
+        return 'Customer'
     
     def get_file_url(self, obj):
         if obj.file:

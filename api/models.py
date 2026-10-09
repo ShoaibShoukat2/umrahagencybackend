@@ -245,8 +245,8 @@ class Passenger(models.Model):
     passport_number = models.CharField(max_length=50)
     passport_expiry = models.DateField()
     passport_issue_date = models.DateField()
-    passport_photo = models.ImageField(upload_to='passports/', blank=True, null=True)
-    photo_id = models.ImageField(upload_to='photo_ids/', blank=True, null=True)
+    passport_photo = models.FileField(upload_to='passports/', blank=True, null=True, help_text='Passport photo page (image or PDF)')
+    photo_id = models.FileField(upload_to='photo_ids/', blank=True, null=True, help_text='NRIC, FIN, or other photo ID (image or PDF)')
     
     def __str__(self):
         return f"{self.full_name} - {self.passenger_type}"
@@ -515,7 +515,7 @@ class Dua(models.Model):
 
 
 class CustomerDocument(models.Model):
-    """Documents uploaded by staff for customers (e.g., visa, tickets, itinerary)"""
+    """Travel documents. Staff can upload these for a customer, and the customer can upload their own."""
     DOCUMENT_TYPES = [
         ('visa', 'Visa'),
         ('ticket', 'Flight Ticket'),

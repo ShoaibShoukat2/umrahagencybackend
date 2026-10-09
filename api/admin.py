@@ -246,7 +246,7 @@ class BookingAdmin(admin.ModelAdmin):
 class PassengerInline(admin.TabularInline):
     model = Passenger
     extra = 0
-    fields = ['full_name', 'passenger_type', 'gender', 'date_of_birth', 'passport_number', 'passport_expiry']
+    fields = ['full_name', 'passenger_type', 'gender', 'date_of_birth', 'passport_number', 'passport_expiry', 'passport_photo', 'photo_id']
 
 @admin.register(BookingRoom)
 class BookingRoomAdmin(admin.ModelAdmin):
@@ -257,10 +257,23 @@ class BookingRoomAdmin(admin.ModelAdmin):
 
 @admin.register(Passenger)
 class PassengerAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'passenger_type', 'gender', 'date_of_birth', 'passport_number', 'passport_expiry']
+    list_display = ['full_name', 'passenger_type', 'gender', 'date_of_birth', 'passport_number', 'passport_expiry', 'passport_file_link', 'photo_id_link']
     list_filter = ['passenger_type', 'gender']
     search_fields = ['full_name', 'passport_number', 'phone']
     date_hierarchy = 'date_of_birth'
+    readonly_fields = ['passport_file_link', 'photo_id_link']
+
+    def passport_file_link(self, obj):
+        if obj.passport_photo:
+            return format_html('<a href="{}" target="_blank">View passport</a>', obj.passport_photo.url)
+        return '—'
+    passport_file_link.short_description = 'Passport file'
+
+    def photo_id_link(self, obj):
+        if obj.photo_id:
+            return format_html('<a href="{}" target="_blank">View photo ID</a>', obj.photo_id.url)
+        return '—'
+    photo_id_link.short_description = 'Photo ID'
 
 @admin.register(BookingAddOn)
 class BookingAddOnAdmin(admin.ModelAdmin):

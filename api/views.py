@@ -1155,6 +1155,8 @@ def get_package_passengers(request, package_id):
                         'passport_issue_date': passenger.passport_issue_date,
                         'passenger_type': passenger.passenger_type,
                         'gender': passenger.gender,
+                        'passport_photo': _absolute_file_url(request, passenger.passport_photo),
+                        'photo_id': _absolute_file_url(request, passenger.photo_id),
                     })
         
         return Response({
@@ -1180,7 +1182,8 @@ def export_package_passengers(request, package_id):
         
         writer = csv.writer(response)
         writer.writerow(['Booking #', 'Full Name', 'Date of Birth', 'Phone', 'Passport Number', 
-                        'Passport Expiry', 'Passport Issue Date', 'Type', 'Gender'])
+                        'Passport Expiry', 'Passport Issue Date', 'Type', 'Gender',
+                        'Passport File', 'Photo ID'])
         
         for booking in bookings:
             for room in booking.rooms.all():
@@ -1195,6 +1198,8 @@ def export_package_passengers(request, package_id):
                         passenger.passport_issue_date,
                         passenger.passenger_type,
                         passenger.gender,
+                        _absolute_file_url(request, passenger.passport_photo) or '',
+                        _absolute_file_url(request, passenger.photo_id) or '',
                     ])
         
         return response
@@ -1365,13 +1370,45 @@ class AdminDiscountCodeViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
 
+def _absolute_file_url(request, file_field):
+    if not file_field:
+        return None
+    try:
+        return request.build_absolute_uri(file_field.url)
+    except Exception:
+        return None
+
+
+@api_view(['GET'])
+def admin_list_customer_documents(request):
+    """Every document saved for any customer, so admin can open them in one list."""
+    documents = CustomerDocument.objects.select_related(
+        'customer', 'booking', 'uploaded_by'
+    )
+    serializer = CustomerDocumentSerializer(documents, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
 @api_view(['POST'])
 def upload_customer_document(request):
-    """Upload a document for a customer (staff only)"""
-    serializer = CustomerDocumentSerializer(data=request.data, context={'request': request})
+    """Upload a document. Staff attach it to a customer; the customer can upload with their email."""
+    data = request.data.copy()
+    if not data.get('customer'):
+        email = data.get('email')
+        if not email and getattr(request.user, 'is_authenticated', False):
+            email = request.user.email
+        if not email:
+            return Response({'error': 'Customer or email is required'}, status=400)
+        try:
+            customer = Customer.objects.get(email=email)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found'}, status=404)
+        data['customer'] = customer.id
+
+    serializer = CustomerDocumentSerializer(data=data, context={'request': request})
     if serializer.is_valid():
-        # Set uploaded_by to current user
-        serializer.save(uploaded_by=request.user)
+        uploaded_by = request.user if getattr(request.user, 'is_authenticated', False) else None
+        serializer.save(uploaded_by=uploaded_by)
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
 

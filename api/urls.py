@@ -77,6 +77,7 @@ urlpatterns = [
     path('duas/<slug:category_slug>/<slug:subcategory_slug>/', dua_subcategory_detail, name='dua-subcategory-detail'),
     
     # Customer Document endpoints
+    path('admin/customer-documents/', admin_list_customer_documents, name='admin-customer-documents'),
     path('customer-documents/', get_customer_documents, name='customer-documents'),
     path('customer-documents/<int:document_id>/', get_document_detail, name='document-detail'),
     path('customer-documents/upload/', upload_customer_document, name='upload-document'),
